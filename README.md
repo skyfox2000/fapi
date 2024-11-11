@@ -188,3 +188,15 @@ const res = await httpPost({
 3. 缓存key会自动根据请求URL和参数生成
 4. 字段映射支持模板语法 `{{field}}`
 5. 建议根据实际需求合理配置缓存策略
+6. package.json配置注意
+```json
+///类型提示
+{
+   "exports": {
+      ".": {
+         "types": "./lib/index.d.ts", /// 必须加在前面，否则类型提示会有问题
+         "default": "./lib/fapi.es.js"
+      }
+   }
+}
+```
