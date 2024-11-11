@@ -21,7 +21,6 @@ export default defineConfig({
       outDir: "lib",
       lib: {
          entry: "src/index.ts", // 指定入口文件
-         name: "@skyfox2000/fapi", // 库的名称，最终会在 UMD 或 IIFE 格式中使用
          fileName: (format) => `fapi.${format}.js`, // 输出文件名模板
       },
       rollupOptions: {

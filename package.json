@@ -1,12 +1,13 @@
 {
-   "name": "@skyfox2000/fapi",
-   "version": "1.0.2",
+   "name": "fapi",
+   "version": "1.0.4",
    "description": "一个基于UniApp的HTTP请求库，支持请求合并、缓存、字段映射、前置/后置处理等高级功能的轻量级封装",
    "module": "./lib/fapi.es.js",
    "types": "./lib/index.d.ts",
    "exports": {
       ".": {
-         "import": "./lib/fapi.es.js"
+         "types": "./lib/index.d.ts",
+         "default": "./lib/fapi.es.js"
       }
    },
    "scripts": {
