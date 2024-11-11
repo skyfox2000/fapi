@@ -6,7 +6,7 @@ import dts from "vite-plugin-dts";
 export default defineConfig({
    plugins: [
       dts({
-         outDir: "dist",
+         outDir: "lib",
          insertTypesEntry: true,
          rollupTypes: true,
          copyDtsFiles: true,
@@ -18,6 +18,7 @@ export default defineConfig({
       },
    },
    build: {
+      outDir: "lib",
       lib: {
          entry: "src/index.ts", // 指定入口文件
          name: "@skyfox2000/fapi", // 库的名称，最终会在 UMD 或 IIFE 格式中使用

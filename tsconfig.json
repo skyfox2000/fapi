@@ -33,7 +33,7 @@
      },
      "typeRoots" : ["./node_modules/@types"],
      "rootDir": "src",
-     "outDir": "dist",
+     "outDir": "lib",
    },
    "include": ["src/**/**.ts", "src/**/**.d.ts"],
    "exclude": ["node_modules"]
