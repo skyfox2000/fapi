@@ -1,0 +1,29 @@
+{
+   "env": {
+      "browser": true,
+      "commonjs": true,
+      "es6": true
+   },
+   "globals": {
+      "vue": true,
+      "wx": true
+   },
+   "parserOptions": { "ecmaVersion": 8 },
+   "rules": {
+      "no-var": "error",
+      "no-unused-vars": "warn",
+      "init-declarations": 2,
+      "quotes": ["error", "double", { "avoidEscape": true }],
+      "linebreak-style": ["error", "windows"],
+      "indent": ["error", 3, { "SwitchCase": 1 }],
+      "array-bracket-spacing": [2, "never"],
+      "block-scoped-var": 0,
+      "brace-style": [1, "1tbs", { "allowSingleLine": true }],
+      "camelcase": "warn",
+      "comma-dangle": [2, "no"],
+      "comma-spacing": [2, { "before": false, "after": true }],
+      "comma-style": [2, "last"],
+      "complexity": [2, 20],
+      "computed-property-spacing": [2, "never"]
+   }
+}

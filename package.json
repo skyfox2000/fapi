@@ -1,0 +1,25 @@
+{
+   "name": "@skyfox2000/fapi",
+   "version": "1.0.1",
+   "description": "一个基于UniApp的HTTP请求库，支持请求合并、缓存、字段映射、前置/后置处理等高级功能的轻量级封装",
+   "module": "./dist/fapi.es.js",
+   "types": "./dist/index.d.ts",
+   "exports": {
+      ".": {
+         "import": "./dist/fapi.es.js"
+      }
+   },
+   "scripts": {
+      "build": "vite build",
+      "test": "echo \"Error: no test specified\" && exit 1"
+   },
+   "author": "skyfox2000@hotmail.com",
+   "license": "MIT",
+   "devDependencies": {
+      "@dcloudio/types": "^3.4.14",
+      "@types/crypto-js": "^4.2.2",
+      "crypto-js": "^4.2.0",
+      "typescript": "^5.6.3",
+      "vite-plugin-dts": "^4.3.0"
+   }
+}
