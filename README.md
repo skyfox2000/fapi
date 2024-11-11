@@ -26,7 +26,7 @@ npm install -S @skyfox2000/fapi
 ### 1. 基础请求配置
 配置API_HOST接口域名参数
 ```typescript
-// 格式定义
+// 接口域名的格式定义
 const API_HOST: {
    [key: string]: string;
 } = {
@@ -36,25 +36,98 @@ const API_HOST: {
 
 请求配置支持以下参数:
 ```typescript
+
+/**
+ * 请求数据结构
+ * @param Option 可选，后端控制配置
+ * @param Query 可选，查询或者统计条件
+ * @param Data 可选，需要保存或者处理的数据
+ */
+export type ReqParams = {
+   /** 后端控制配置 */
+   Option?: Record<string, any>;
+   /** 查询或者统计条件 */
+   Query?: Record<string, any>;
+   /** 需要保存或者处理的数据 */
+   Data?: AnyData;
+};
+
 {
-   api: string; // 接口域名定义的Key
-   url: string; // 接口地址，以/开头
-   timeout?: number; // 超时时间,默认5秒，单位秒
-   params?: { // 默认参数
-      Option?: object; // 后端控制参数
-      Query?: object; // 查询条件
-      Data?: any; // 请求数据
-   };
-   hideErrorToast?: boolean; // 是否隐藏错误提示
-   cacheTime?: number; // 缓存时间(秒),-1永久,0不缓存
-   storage?: "memory" | "uni" | "session" | "local"; // 缓存位置
-   authorize?: boolean; // 是否需要授权
-   meta?: object; // 额外控制参数
-   fieldMap?: object; // 字段映射配置Key/Value，根据Value字段名或者模板，获取结果，存入对象的新Key字段
-   header?: object; // 自定义请求头
-   before?: Function; // 请求前处理
-   after?: Function; // 请求后处理
-   trace?: boolean; // 是否跟踪调用链
+   /**
+    * API_HOST接口域名的Key
+    */
+   api: string;
+   /**
+    * 接口地址，以/开头
+    */
+   url: string;
+   /**
+    * 超时时间，默认5秒
+    */
+   timeout?: number;
+   /**
+    * 默认参数
+    ** Option 默认控制
+    ** Query 默认查询
+    ** Data 默认数据
+    */
+   params?: ReqParams;
+   /**
+    * 出错时是否隐藏错误提示
+    ** 默认false，默认发生错误立即显示
+    */
+   hideErrorToast?: boolean;
+   /**
+    * 缓存时长，
+    * 默认0
+    ** 0:不缓存
+    ** 1:永久缓存
+    ** 其他:缓存时长(单位:秒)
+    */
+   cacheTime?: number;
+   /**
+    * 缓存类型
+    ** memory 内存
+    ** local 本地永久
+    ** session 本地会话
+    ** uni uniapp的缓存
+    */
+   storage?: StorageType;
+   /**
+    * 是否需要授权Token
+    */
+   authorize?: boolean;
+   /**
+    * 额外前端执行控制参数，不发送
+    */
+   meta?: Record<string, any>;
+   /**
+    * 前端字段转换，保留原字段
+    ** 支持数组/对象
+    ** 支持模板{{属性名}}
+    */
+   fieldMap?: Record<string, string>;
+   /**
+    * 额外header配置
+    */
+   header?:
+      | Record<string, string>
+      | ((headers: Record<string, string>) => void);
+   /**
+    * 调用前置处理
+    * @param config 请求参数
+    */
+   before?: (config: Record<string, any>) => void;
+   /**
+    * 调用后置处理
+    * @param config 请求参数
+    * @param result 结果数据
+    */
+   after?: (config: Record<string, any>, result: ApiResponse) => void;
+   /**
+    * 是否跟踪调用链，请求结果发送到运维服务器
+    */
+   trace?: boolean;
 }
 ```
 
@@ -191,6 +264,40 @@ const res = await httpPost(UserUrlList.list,  { Query: { Mobile: mobile } } )
 - local: 本地永久缓存
 
 可以通过 `cacheTime` 和 `storage` 参数配置缓存策略。
+
+### 6. 前置处理和后置处理
+
+#### 6.1 前置处理可修改请求参数:
+```typescript
+export const AppUrlList: {
+  /** 获取应用信息 */
+  appInfo: IUrlInfo
+} = {
+  appInfo: {
+    api: 'SITEHOST_API',
+    url: '/api/RCApplicationSrv/get',
+    before: (options) => {
+      // options为uni.request的请求参数
+    }
+  },
+}
+```
+
+#### 6.2 后置处理可修改请求返回结果:
+```typescript
+export const AppUrlList: {
+  /** 获取应用信息 */
+  appInfo: IUrlInfo
+} = {
+  appInfo: {
+    api: 'SITEHOST_API',
+    url: '/api/RCApplicationSrv/get',
+    after: (options) => {
+      // options为uni.request的请求参数
+    }
+  },
+}
+```
 
 ## 注意事项
 

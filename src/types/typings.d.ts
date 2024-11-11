@@ -1,10 +1,12 @@
 // 全局要用的类型放到这里
 /**
  * 缓存类型
- ** memory 内存
- ** local 本地永久
+    ** memory 内存
+    ** local 本地永久
+    ** session 本地会话
+    ** uni uniapp的缓存
  */
-export type StorageType = "memory" | "uni" | "session" | "local";
+export type StorageType = "memory" | "local" | "session" | "uni";
 
 export type AnyData =
    | Record<string, any>
@@ -66,7 +68,6 @@ export type ApiResponse<T = AnyData> = {
  * @param Option 可选，后端控制配置
  * @param Query 可选，查询或者统计条件
  * @param Data 可选，需要保存或者处理的数据
- * @param Callback 可选，结果回调接口，需要结果对象结构
  */
 export type ReqParams = {
    /** 后端控制配置 */
@@ -141,6 +142,8 @@ export type IUrlInfo = {
     * 缓存类型
     ** memory 内存
     ** local 本地永久
+    ** session 本地会话
+    ** uni uniapp的缓存
     */
    storage?: StorageType;
    /**
@@ -165,13 +168,13 @@ export type IUrlInfo = {
       | ((headers: Record<string, string>) => void);
    /**
     * 调用前置处理
+    * @param config 请求参数
     */
    before?: (config: Record<string, any>) => void;
    /**
     * 调用后置处理
+    * @param config 请求参数
     * @param result 结果数据
-    * @param params 请求参数
-    * @param urlInfo 请求地址配置
     */
    after?: (config: Record<string, any>, result: ApiResponse) => void;
    /**

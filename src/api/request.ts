@@ -53,7 +53,7 @@ const request = <T>(
       }
 
       Object.assign(config, options);
-      console.log(config);
+      // console.log(config);
       if (urlInfo.before) {
          urlInfo.before!.call(urlInfo, config);
       }
