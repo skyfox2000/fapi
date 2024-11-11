@@ -71,7 +71,7 @@ const API_HOST: {
 
 ### 2. 基础使用示例
 
-#### 基础请求:
+#### 2.1 基础请求:
 ```typescript
 // PUT请求
 const res = await httpPut({
@@ -95,7 +95,7 @@ const res = await httpPost({
 })
 ```
 
-#### 高级请求方式:
+#### 2.2 高级请求方式:
 配置接口列表进行统一管理，调用时，使用接口名即可，方便统一管理修改
 ```typescript
 import { IUrlInfo } from '@skyfox2000/fapi'
@@ -128,21 +128,32 @@ export const AppUrlList: {
     },
   },
 }
+
+/// 调用方法
+const res = await httpPost(HostUrlList.host,  { Query: { Mobile: mobile } } )
 ```
 
-#### 带缓存的查询请求:
+#### 2.3 带缓存的查询请求:
 ```typescript
-const res = await httpPost({
-   api: 'SITEHOST_API',
-   url: '/api/users/list',
-   cacheTime: 60, // 缓存60秒
-   storage: 'memory',
-   params: {
+export const UserUrlList: {
+  /** 用户信息 */
+  list: IUrlInfo
+} = {
+  list: {
+    api: 'SITEHOST_API',
+    url: '/api/users/list',
+    cacheTime: 60, // 缓存60秒
+    storage: 'memory',
+    params: { /// 默认参数，合并数据
       Query: {
          page: 1
       }
-   }
-})
+    }
+  },
+}
+
+/// 调用方法
+const res = await httpPost(UserUrlList.list,  { Query: { Mobile: mobile } } )
 ```
 
 ### 3. 响应数据格式
