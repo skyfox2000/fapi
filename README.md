@@ -276,7 +276,7 @@ export const AppUrlList: {
   appInfo: {
     api: 'SITEHOST_API',
     url: '/api/RCApplicationSrv/get',
-    before: (options) => {
+    before: (config: Record<string, any>) => {
       // options为uni.request的请求参数
     }
   },
@@ -292,8 +292,9 @@ export const AppUrlList: {
   appInfo: {
     api: 'SITEHOST_API',
     url: '/api/RCApplicationSrv/get',
-    after: (options) => {
+    after: (config: Record<string, any>, result: ApiResponse) => {
       // options为uni.request的请求参数
+      // result为返回结果
     }
   },
 }
