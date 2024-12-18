@@ -1,5 +1,3 @@
-website/static/scripts/applications/vt_vrtrain/components
-website/static/styles/applications/vt_vrtrain
 # ---> Node
 # Logs
 logs
@@ -132,3 +130,4 @@ docs/_book
 test/
 
 plugins/PackService/PackService.plugin.js
+visualizer.html

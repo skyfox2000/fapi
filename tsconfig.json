@@ -1,5 +1,6 @@
 {
    "compilerOptions": {
+      "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
      "declaration": true,
      "emitDeclarationOnly": false,
      "esModuleInterop": true,
@@ -35,6 +36,6 @@
      "rootDir": "src",
      "outDir": "lib",
    },
-   "include": ["src/**/**.ts", "src/**/**.d.ts"],
+   "include": ["src/**/**.ts", "src/**/**.d.ts", "src/**/**.vue"],
    "exclude": ["node_modules"]
  }

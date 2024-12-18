@@ -1,14 +1,76 @@
-// # 弹窗处理
+import Message from "vue-m-message";
+import "vue-m-message/dist/style.css";
+
+interface ShowToastOptions {
+   /**
+    * 提示的内容
+    */
+   title?: string;
+
+   /**
+    * 是否可关闭，默认：false
+    */
+   closable?: boolean;
+   /**
+    * 图标
+    * - success: 显示成功图标
+    * - loading: 显示加载图标
+    * - error: 显示错误图标
+    * - none: 不显示图标
+    * - warning: 显示警告图标，此时 title 文本无长度显示，仅支付宝小程序、字节小程序
+    */
+   icon?: "success" | "loading" | "error" | "none" | "warning";
+
+   /**
+    * 自定义图标的本地路径，image 的优先级高于 icon
+    */
+   image?: string;
+
+   /**
+    * 提示的延迟时间，单位毫秒，默认：1500
+    */
+   duration?: number;
+
+   /**
+    * 纯文本轻提示显示位置，填写有效值后只有 title 属性生效
+    * ToastPosition 仅Vue方式显示
+    * - top: 居上显示
+    * - center: 居中显示
+    * - bottom: 居底显示
+    */
+   position?: "top" | "center" | "bottom" | "top-center";
+
+   /**
+    * 是否显示透明蒙层，防止触摸穿透，默认：false
+    */
+   mask?: boolean;
+
+   /**
+    * 接口调用成功的回调函数
+    */
+   success?: () => void;
+
+   /**
+    * 接口调用失败的回调函数
+    */
+   fail?: () => void;
+
+   /**
+    * 接口调用结束的回调函数（调用成功、失败都会执行）
+    */
+   complete?: () => void;
+}
 
 class Toast {
-   private defaultOptions: UniNamespace.ShowToastOptions = {
-      icon: "none",
+   private defaultOptions: ShowToastOptions = {
+      closable: false,
       duration: 3000,
+      icon: "none",
       mask: false,
       position: "center",
    };
 
-   public success(options: UniNamespace.ShowToastOptions = {}): void {
+   public success(options: ShowToastOptions = {}): void {
       this.show({
          ...this.defaultOptions,
          icon: "success",
@@ -17,54 +79,127 @@ class Toast {
       });
    }
 
-   public error(options: UniNamespace.ShowToastOptions = {}): void {
+   public error(options: ShowToastOptions = {}): void {
       this.show({
          ...this.defaultOptions,
          icon: "error",
+         duration: 5000,
          ...options,
          title: options.title || "操作失败",
       });
    }
 
-   public warning(options: UniNamespace.ShowToastOptions = {}): void {
+   public warning(options: ShowToastOptions = {}): void {
       this.show({
          ...this.defaultOptions,
-         icon: "none",
+         icon: "warning",
+         duration: 5000,
          ...options,
          title: options.title || "警告警告",
-         // backgroundColor: '#FFC107',
-         // color: '#fff',
       });
    }
 
-   public info(options: UniNamespace.ShowToastOptions = {}): void {
+   public info(options: ShowToastOptions = {}): void {
       this.show({
          ...this.defaultOptions,
          icon: "none",
          ...options,
          title: options.title || "提示信息",
-         // backgroundColor: '#17A2B8',
-         // color: '#fff',
       });
    }
 
-   public loading(options: UniNamespace.ShowToastOptions = {}): void {
+   public loading(options: ShowToastOptions = {}): void {
       this.show({
          ...this.defaultOptions,
          icon: "loading",
          ...options,
          title: options.title || "数据加载中",
-         // backgroundColor: '#17A2B8',
-         // color: '#fff',
+         position: "top-center",
       });
    }
 
-   public hide(): void {
-      uni.hideToast();
+   public hide(delay?: number): void {
+      delay = delay || 0 > 0 ? delay : 0;
+      if (delay === 0) this.close();
+      else setTimeout(this.close, delay);
    }
 
-   private show(options: UniNamespace.ShowToastOptions): void {
-      uni.showToast(options);
+   private close() {
+      if (typeof uni !== "undefined" && uni.hideToast) {
+         // 如果存在 uni 库，则使用 uni 的 hideToast 方法
+         uni.hideToast();
+      } else {
+         Message.closeAll();
+      }
+   }
+
+   private show(options: ShowToastOptions): void {
+      const { title, icon, mask, duration, position } = options;
+      if (typeof uni !== "undefined" && uni.showToast) {
+         // 如果存在 uni 库，则使用 uni 的 showToast 方法
+         uni.showToast({
+            ...options,
+            title: title,
+            icon: icon === "warning" ? "error" : icon, // uni-app 中没有 loading 图标，使用 none 代替
+            duration: duration,
+            position: position as any,
+            mask: options.mask,
+            success: options.success,
+            fail: options.fail,
+            complete: options.complete,
+         });
+      } else {
+         // 使用 vue3-toastify 的方法
+         let toastType = "info"; // 默认为 info 类型
+         this.hide();
+         switch (icon) {
+            case "success":
+               Message.success(title, {
+                  ...options,
+                  title: "",
+                  position: position as any,
+                  hasMask: mask,
+                  type: toastType,
+                  icon: toastType,
+                  dangerouslyHTMLString: true,
+                  closeOnClick: true,
+                  pauseOnFocusLoss: true,
+                  pauseOnHover: true,
+               });
+               break;
+            case "error":
+               Message.error(title, {
+                  ...options,
+                  title: "",
+                  position: position as any,
+                  hasMask: mask,
+                  type: toastType,
+                  icon: toastType,
+               });
+               break;
+            case "loading":
+               Message.loading(title, {
+                  ...options,
+                  title: "",
+                  position: position as any,
+                  hasMask: mask,
+                  type: toastType,
+                  icon: toastType,
+                  duration: -1, // 不自动关闭
+               });
+               break;
+            default:
+               Message.info(title, {
+                  ...options,
+                  title: "",
+                  position: position as any,
+                  hasMask: mask,
+                  type: toastType,
+                  icon: toastType,
+               });
+               break;
+         }
+      }
    }
 }
 

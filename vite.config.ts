@@ -1,7 +1,8 @@
 // vite.config.js 或 vite.config.ts
 import { defineConfig } from "vite";
-import { fileURLToPath, URL } from "node:url";
+import path from "path";
 import dts from "vite-plugin-dts";
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
    plugins: [
@@ -11,21 +12,28 @@ export default defineConfig({
          rollupTypes: true,
          copyDtsFiles: true,
       }),
+      visualizer({
+         emitFile: false,
+         filename: "visualizer.html",
+         open: false,
+      }),
    ],
    resolve: {
       alias: {
-         "@": fileURLToPath(new URL("./src", import.meta.url)), // 添加路径别名
+         "@": path.resolve("./src"),
       },
+      extensions: [".js", ".ts", ".vue", "json"],
    },
    build: {
       outDir: "lib",
+      assetsDir: "assets",
       lib: {
          entry: "src/index.ts", // 指定入口文件
          fileName: (format) => `fapi.${format}.js`, // 输出文件名模板
       },
       rollupOptions: {
          // 外部化处理那些你并不打算打包进库的依赖
-         external: ["crypto-js"],
+         external: ["vue", "axios", "crypto-js"],
          // 如果你使用 TypeScript，则需要提供类型声明文件的输出路径
          output: [
             {
@@ -33,8 +41,10 @@ export default defineConfig({
                extend: false,
                // 提供多个模块格式
                format: "es",
+               chunkFileNames: "static/modules/[name]-[hash].js",
             },
          ],
       },
+      minify: true, // 开启压缩
    },
 });

@@ -1,10 +1,13 @@
 // 全局要用的类型放到这里
+
+import { ResponseType } from "axios";
+
 /**
  * 缓存类型
-    ** memory 内存
-    ** local 本地永久
-    ** session 本地会话
-    ** uni uniapp的缓存
+ ** memory 内存
+ ** local 本地永久
+ ** session 本地会话
+ ** uni uniapp的缓存
  */
 export type StorageType = "memory" | "local" | "session" | "uni";
 
@@ -34,6 +37,10 @@ export type CacheEntry = {
     * 超时时间
     */
    expireAt: number;
+   /**
+    * 最后修改时间
+    */
+   lastModified: number;
 };
 
 export type FindResult<T = Record<string, AnyData>> = {
@@ -49,6 +56,103 @@ export enum ResStatus {
 export type AjaxResponse = {
    statusCode: number;
    data: AnyData;
+};
+
+export type RequestOptions = {
+   /**
+    * 资源url
+    */
+   url: string;
+   /**
+    * 请求的参数
+    */
+   data?: any;
+   /**
+    * 设置请求的 header，header 中不能设置 Referer。
+    */
+   header?: any;
+   /**
+    * 默认为 GET
+    * 可以是：OPTIONS，GET，HEAD，POST，PUT，DELETE，TRACE，CONNECT
+    */
+   method?: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE";
+   /**
+    * 超时时间
+    */
+   timeout?: number;
+   /**
+    * 如果设为json，会尝试对返回的数据做一次 JSON.parse
+    */
+   dataType?: string;
+   /**
+    * 设置响应的数据类型。合法值：text、arraybuffer
+    */
+   responseType?: ResponseType;
+   /**
+    * 加载条文字信息
+    */
+   loadingText?: boolean | string;
+   /**
+    * 验证 ssl 证书
+    */
+   sslVerify?: boolean;
+   /**
+    * 跨域请求时是否携带凭证
+    */
+   withCredentials?: boolean;
+   /**
+    * DNS解析时优先使用 ipv4
+    */
+   firstIpv4?: boolean;
+   /**
+    * 开启 http2
+    */
+   enableHttp2?: boolean;
+   /**
+    * 开启 quic
+    */
+   enableQuic?: boolean;
+   /**
+    * 开启 cache
+    */
+   enableCache?: boolean;
+   /**
+    * 是否开启 HttpDNS 服务。如开启，需要同时填入 httpDNSServiceId 。 HttpDNS 用法详见 [移动解析HttpDNS](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/HTTPDNS.html)
+    */
+   enableHttpDNS?: boolean;
+   /**
+    * HttpDNS 服务商 Id。 HttpDNS 用法详见 [移动解析HttpDNS](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/HTTPDNS.html)
+    */
+   httpDNSServiceId?: boolean;
+   /**
+    * 开启 transfer-encoding chunked
+    */
+   enableChunked?: boolean;
+   /**
+    * wifi下使用移动网络发送请求
+    */
+   forceCellularNetwork?: boolean;
+   /**
+    * 默认 false，开启后可在headers中编辑cookie（支付宝小程序10.2.33版本开始支持）
+    */
+   enableCookie?: boolean;
+   /**
+    * 是否开启云加速（详见[云加速服务](https://smartprogram.baidu.com/docs/develop/extended/component-codeless/cloud-speed/introduction/)）
+    */
+   cloudCache?: object | boolean;
+   /**
+    * 控制当前请求是否延时至首屏内容渲染后发送
+    */
+   defer?: boolean;
+   success?: (result: AjaxResponse) => void;
+   /**
+    * 失败的回调函数
+    */
+   fail?: (err: any) => void;
+   /**
+    * 结束的回调函数（调用成功、失败都会执行）
+    */
+   complete?: () => void;
 };
 
 /**
@@ -94,16 +198,17 @@ export type ReqParams = {
  ** before?: 调用前置处理
  ** after?: 调用后置处理
  ** trace?: 是否跟踪调用链，请求结果发送到运维服务器
- * @example 执行次序
- * Request
+ * @example 查询请求过程执行次序
  * -> cache? 缓存判断获取返回
  * -> headers? 处理请求头数据
  * -> authorize? 添加授权Token
  * -> before? 请求预处理
+ * -=> 发起实际请求
  * -> hideErrorToast? 错误提示
  * -> fieldMap? 前端字段转换
  * -> after? 结果处理
  * -> cache 缓存判断存储
+
  */
 export type IUrlInfo = {
    /**
@@ -177,6 +282,10 @@ export type IUrlInfo = {
     * @param result 结果数据
     */
    after?: (config: Record<string, any>, result: ApiResponse) => void;
+   /**
+    * 加载提示文字，设置为false时不显示，默认为通用文字
+    */
+   loadingText?: boolean | string;
    /**
     * 是否跟踪调用链，请求结果发送到运维服务器
     */
