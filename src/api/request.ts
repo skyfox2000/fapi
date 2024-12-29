@@ -7,6 +7,17 @@ import {
    AnyData,
 } from "@/types/typings.d";
 import { generateKey } from "@/utils/data/keyGenerate";
+import { init } from "@paralleldrive/cuid2";
+const createId = init({
+   // A custom random function with the same API as Math.random.
+   // You can use this to pass a cryptographically secure random function.
+   random: Math.random,
+   // the length of the id
+   length: 10,
+   // A custom fingerprint for the host environment. This is used to help
+   // prevent collisions when generating ids in a distributed system.
+   fingerprint: "",
+});
 
 import { fieldMapping, toast } from "@/utils/index";
 import { FrontCache } from "./cache";
@@ -28,6 +39,8 @@ export const requestBefore = (
    } else if (typeof urlInfo.header === "function") {
       options.header = urlInfo.header(config.header);
    }
+   if (!options.header) options.header = {};
+   options.header.reqId = createId();
 
    Object.assign(config, options);
 

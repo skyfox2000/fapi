@@ -54,9 +54,6 @@ export declare type CacheEntry = {
     lastModified: number;
 };
 
-declare const _default: {};
-export default _default;
-
 export declare const fieldMapping: (fieldMap: Record<string, string>, data: any) => any;
 
 export declare type FindResult<T = Record<string, AnyData>> = {
@@ -343,11 +340,12 @@ export declare type StorageType = "memory" | "local" | "session" | "uni";
 
 declare class Toast {
     private defaultOptions;
-    success(options?: ShowToastOptions): void;
-    error(options?: ShowToastOptions): void;
-    warning(options?: ShowToastOptions): void;
-    info(options?: ShowToastOptions): void;
-    loading(options?: ShowToastOptions): void;
+    private showToast;
+    success(options: ShowToastOptions | string): void;
+    error(options: ShowToastOptions | string): void;
+    warning(options: ShowToastOptions | string): void;
+    info(options: ShowToastOptions | string): void;
+    loading(options: ShowToastOptions | string): void;
     hide(delay?: number): void;
     private close;
     private show;

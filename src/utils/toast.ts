@@ -1,6 +1,8 @@
 import Message from "vue-m-message";
 import "vue-m-message/dist/style.css";
 
+type ToastType = "success" | "error" | "warning" | "none" | "loading";
+
 interface ShowToastOptions {
    /**
     * 提示的内容
@@ -70,52 +72,40 @@ class Toast {
       position: "center",
    };
 
-   public success(options: ShowToastOptions = {}): void {
+   private showToast(
+      type: ToastType,
+      options: ShowToastOptions | string,
+      defaultTitle: string,
+      duration?: number
+   ): void {
+      const title =
+         typeof options === "string" ? options : options.title || defaultTitle;
       this.show({
          ...this.defaultOptions,
-         icon: "success",
-         ...options,
-         title: options.title || "操作成功",
+         icon: type,
+         duration: duration || this.defaultOptions.duration,
+         title,
       });
    }
 
-   public error(options: ShowToastOptions = {}): void {
-      this.show({
-         ...this.defaultOptions,
-         icon: "error",
-         duration: 5000,
-         ...options,
-         title: options.title || "操作失败",
-      });
+   public success(options: ShowToastOptions | string): void {
+      this.showToast("success", options, "操作成功");
    }
 
-   public warning(options: ShowToastOptions = {}): void {
-      this.show({
-         ...this.defaultOptions,
-         icon: "warning",
-         duration: 5000,
-         ...options,
-         title: options.title || "警告警告",
-      });
+   public error(options: ShowToastOptions | string): void {
+      this.showToast("error", options, "操作失败", 5000);
    }
 
-   public info(options: ShowToastOptions = {}): void {
-      this.show({
-         ...this.defaultOptions,
-         icon: "none",
-         ...options,
-         title: options.title || "提示信息",
-      });
+   public warning(options: ShowToastOptions | string): void {
+      this.showToast("warning", options, "警告警告", 5000);
    }
 
-   public loading(options: ShowToastOptions = {}): void {
-      this.show({
-         ...this.defaultOptions,
-         icon: "loading",
-         ...options,
-         title: options.title || "数据加载中",
-         position: "top-center",
-      });
+   public info(options: ShowToastOptions | string): void {
+      this.showToast("none", options, "提示信息");
+   }
+
+   public loading(options: ShowToastOptions | string): void {
+      this.showToast("loading", options, "数据加载中", -1);
    }
 
    public hide(delay?: number): void {
@@ -157,21 +147,21 @@ class Toast {
                Message.success(title, {
                   ...options,
                   title: "",
-                  position: position as any,
+                  position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,
-                  dangerouslyHTMLString: true,
                   closeOnClick: true,
                   pauseOnFocusLoss: true,
                   pauseOnHover: true,
                });
                break;
             case "error":
+               console.log("error show");
                Message.error(title, {
                   ...options,
                   title: "",
-                  position: position as any,
+                  position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,
@@ -181,7 +171,7 @@ class Toast {
                Message.loading(title, {
                   ...options,
                   title: "",
-                  position: position as any,
+                  position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,

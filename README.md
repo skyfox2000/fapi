@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-这是一个基于 UniApp 的请求库,提供了统一的接口调用方式,支持请求缓存、字段映射、请求合并等高级功能。主要用于优化前端接口调用体验,提高开发效率。
+这是一个基于 UniApp 和 Axios 的请求库,提供了统一的接口调用方式,支持请求缓存、字段映射、请求合并等高级功能。主要用于优化前端接口调用体验,提高开发效率。
 
 ## 安装方式
 ```shell
@@ -11,7 +11,7 @@ npm install -S @skyfox2000/fapi
 
 ## 功能清单
 
-- 统一的请求配置
+- 统一的请求配置，支持uni.request和axios两种方式
 - HTTP 请求方法支持(GET/POST/PUT/DELETE)
 - 请求缓存管理
 - 相同请求合并
@@ -36,7 +36,6 @@ const API_HOST: {
 
 请求配置支持以下参数:
 ```typescript
-
 /**
  * 请求数据结构
  * @param Option 可选，后端控制配置
@@ -277,7 +276,7 @@ export const AppUrlList: {
     api: 'SITEHOST_API',
     url: '/api/RCApplicationSrv/get',
     before: (config: Record<string, any>) => {
-      // options为request的请求参数
+      // config为request的请求参数
     }
   },
 }
@@ -293,7 +292,7 @@ export const AppUrlList: {
     api: 'SITEHOST_API',
     url: '/api/RCApplicationSrv/get',
     after: (config: Record<string, any>, result: ApiResponse) => {
-      // options为request的请求参数
+      // config为request的请求参数
       // result为返回结果
     }
   },
