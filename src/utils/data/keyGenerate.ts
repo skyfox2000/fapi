@@ -1,7 +1,7 @@
-import MD5 from "blueimp-md5";
+import MD5 from "./md5";
 // 静态方法：生成哈希键
 export const hashKey = (input: string): string => {
-   return MD5(input).toString();
+   return MD5(input);
 };
 
 // 静态方法：根据条件获取键

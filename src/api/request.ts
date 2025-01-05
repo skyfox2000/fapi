@@ -118,7 +118,6 @@ export const requestSuccess = <T>(
          errno: statusCode + 1000,
          msg: message,
       };
-      console.error(err);
       resultInfo.Error = err;
    }
 };
@@ -129,7 +128,7 @@ export const requestFail = <T>(netErr: any, resultInfo: RequestResult<T>) => {
    const err: ApiResponse = {
       status: ResStatus.ERROR,
       errno: 1000,
-      msg: "网络错误",
+      msg: "网络错误：" + netErr.toString(),
    };
 
    resultInfo.Error = err;
@@ -142,8 +141,11 @@ export const requestComplete = <T>(
       value: ApiResponse<T> | PromiseLike<ApiResponse<T> | null> | null
    ) => void
 ) => {
-   if (!urlInfo!.hideErrorToast && resultInfo.Error) {
-      toast.error({ title: resultInfo.Error.msg });
+   if (resultInfo.Error) {
+      console.error(JSON.parse(JSON.stringify(urlInfo)), resultInfo.Error);
+      if (!urlInfo!.hideErrorToast) {
+         toast.error({ title: resultInfo.Error.msg });
+      }
    } else {
       toast.hide(1000);
    }

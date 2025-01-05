@@ -58,6 +58,7 @@ export const uniGet = <T>(
    urlInfo: IUrlInfo
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -81,6 +82,7 @@ export const uniPut = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -106,6 +108,7 @@ export const uniDelete = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -131,6 +134,7 @@ export const uniPost = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,

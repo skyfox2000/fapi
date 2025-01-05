@@ -4,3 +4,7 @@
 export const SERVER_HOST: {
   [key: string]: string
 } = {}
+
+export const ICON_HOST: {
+   [key: string]: any;
+} = {};

@@ -5,16 +5,20 @@ export declare type AjaxResponse = {
     data: AnyData;
 };
 
-export declare type AnyData =
-| Record<string, any>
-| Record<string, any>[]
-| AnyData[]
-| string
-| number
-| null
-| undefined;
+/**
+ * 任意数据类型
+ */
+export declare type AnyData = AnyJsonData | boolean | string | number;
 
-export declare type AnyJsonData = Record<string, any> | AnyData[];
+/**
+ * 任意Json格式数据类型
+ */
+export declare type AnyJsonData =
+| Record<string, AnyJsonData>
+| Set
+| null
+| undefined
+| (AnyJsonData | boolean | string | number)[];
 
 export declare const API_HOST: {
     [key: string]: string;
@@ -63,7 +67,7 @@ export declare type FindResult<T = Record<string, AnyData>> = {
 
 export declare const globalRequestOption: (config: UniNamespace.RequestOptions) => void;
 
-export declare const hostUrl: (urlInfo: IUrlInfo) => string;
+export declare const hostUrl: (urlInfo: IUrlInfo) => string | false;
 
 export declare const httpDelete: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
 
@@ -72,6 +76,10 @@ export declare const httpGet: <T>(urlInfo: IUrlInfo) => Promise<ApiResponse<T> |
 export declare const httpPost: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
 
 export declare const httpPut: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+
+export declare const ICON_HOST: {
+    [key: string]: any;
+};
 
 export declare const isJSON: (value: any) => boolean;
 
@@ -115,7 +123,7 @@ export declare type IUrlInfo = {
     /**
      * 接口域名
      */
-    api: string;
+    api?: string;
     /**
      * 接口地址
      */
@@ -199,7 +207,7 @@ export declare type IUrlInfo = {
  * @param Query 可选，查询或者统计条件
  * @param Data 可选，需要保存或者处理的数据
  */
-export declare type ReqParams = {
+export declare type ReqParams<T = AnyData> = {
     /** 后端控制配置 */
     Option?: Record<string, any>;
     /** 查询或者统计条件 */

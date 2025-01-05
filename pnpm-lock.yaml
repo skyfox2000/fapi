@@ -11,9 +11,6 @@ importers:
       '@paralleldrive/cuid2':
         specifier: ^2.2.2
         version: 2.2.2
-      blueimp-md5:
-        specifier: ^2.19.0
-        version: 2.19.0
       vue-m-message:
         specifier: ^4.0.2
         version: 4.0.2
@@ -21,9 +18,6 @@ importers:
       '@dcloudio/types':
         specifier: ^3.4.14
         version: 3.4.14
-      '@types/blueimp-md5':
-        specifier: ^2.18.2
-        version: 2.18.2
       '@types/crypto-js':
         specifier: ^4.2.2
         version: 4.2.2
@@ -371,9 +365,6 @@ packages:
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
-  '@types/blueimp-md5@2.18.2':
-    resolution: {integrity: sha512-dJ9yRry9Olt5GAWlgCtE5dK9d/Dfhn/V7hna86eEO2Pn76+E8Y0S0n61iEUEGhWXXgtKtHxtZLVNwL8X+vLHzg==}
-
   '@types/crypto-js@4.2.2':
     resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
 
@@ -455,9 +446,6 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
-
-  blueimp-md5@2.19.0:
-    resolution: {integrity: sha512-DRQrD6gJyy8FbiE4s+bDoXS9hiW3Vbx5uCdwvcCf3zLHL+Iv7LtGHLpr+GZV8rHG8tK766FGYBwRbu8pELTt+w==}
 
   brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -1087,8 +1075,6 @@ snapshots:
 
   '@types/argparse@1.0.38': {}
 
-  '@types/blueimp-md5@2.18.2': {}
-
   '@types/crypto-js@4.2.2': {}
 
   '@types/estree@1.0.6': {}
@@ -1183,8 +1169,6 @@ snapshots:
       - debug
 
   balanced-match@1.0.2: {}
-
-  blueimp-md5@2.19.0: {}
 
   brace-expansion@1.1.11:
     dependencies:

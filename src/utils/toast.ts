@@ -1,5 +1,4 @@
 import Message from "vue-m-message";
-import "vue-m-message/dist/style.css";
 
 type ToastType = "success" | "error" | "warning" | "none" | "loading";
 
@@ -157,7 +156,6 @@ class Toast {
                });
                break;
             case "error":
-               console.log("error show");
                Message.error(title, {
                   ...options,
                   title: "",
@@ -182,7 +180,7 @@ class Toast {
                Message.info(title, {
                   ...options,
                   title: "",
-                  position: position as any,
+                  position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,

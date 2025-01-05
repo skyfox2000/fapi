@@ -50,16 +50,24 @@ const request = <T>(
             );
          })
          .catch((err: AxiosError) => {
-            if (err.status && err.status > 200 && err.status < 600) {
-               requestSuccess(
-                  options,
-                  urlInfo,
-                  {
-                     statusCode: err.status,
-                     data: err.response?.data as any,
-                  },
-                  resultInfo
-               );
+            if (err.response) {
+               if (
+                  err.response.status &&
+                  err.response.status > 200 &&
+                  err.response.status < 600
+               ) {
+                  requestSuccess(
+                     options,
+                     urlInfo,
+                     {
+                        statusCode: err.response.status,
+                        data: err.response?.data as any,
+                     },
+                     resultInfo
+                  );
+               } else {
+                  requestFail(err, resultInfo);
+               }
             } else {
                requestFail(err, resultInfo);
             }
@@ -79,6 +87,7 @@ export const httpGet = <T>(
    urlInfo: IUrlInfo
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -102,6 +111,7 @@ export const httpPut = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -127,6 +137,7 @@ export const httpDelete = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,
@@ -152,6 +163,7 @@ export const httpPost = <T>(
    data?: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
+   if (url === false) return Promise.resolve(null);
    return http(
       {
          url,

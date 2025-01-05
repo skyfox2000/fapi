@@ -11,16 +11,20 @@ import { ResponseType } from "axios";
  */
 export type StorageType = "memory" | "local" | "session" | "uni";
 
-export type AnyData =
-   | Record<string, any>
-   | Record<string, any>[]
-   | AnyData[]
-   | string
-   | number
+/**
+ * 任意Json格式数据类型
+ */
+export type AnyJsonData =
+   | Record<string, AnyJsonData>
+   | Set
    | null
-   | undefined;
+   | undefined
+   | (AnyJsonData | boolean | string | number)[];
 
-export type AnyJsonData = Record<string, any> | AnyData[];
+/**
+ * 任意数据类型
+ */
+export type AnyData = AnyJsonData | boolean | string | number;
 /**
  * 前端缓存
  */
@@ -173,7 +177,7 @@ export type ApiResponse<T = AnyData> = {
  * @param Query 可选，查询或者统计条件
  * @param Data 可选，需要保存或者处理的数据
  */
-export type ReqParams = {
+export type ReqParams<T = AnyData> = {
    /** 后端控制配置 */
    Option?: Record<string, any>;
    /** 查询或者统计条件 */
@@ -214,7 +218,7 @@ export type IUrlInfo = {
    /**
     * 接口域名
     */
-   api: string;
+   api?: string;
    /**
     * 接口地址
     */
