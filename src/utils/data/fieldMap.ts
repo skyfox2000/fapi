@@ -8,7 +8,10 @@ const tempReg = /\$\{([\w\.\[\]0-9]+)\}/g;
  * @param template 模板字符串
  * @param data 数据对象
  */
-function parseTemplate(template: string, data: Record<string, any>): string {
+export const parseFieldTemplate = (
+   template: string,
+   data: Record<string, any>
+): string => {
    return template.replace(tempReg, (match: string, key: string) => {
       const keys = key.split(".");
       let value: any = data;
@@ -30,7 +33,7 @@ function parseTemplate(template: string, data: Record<string, any>): string {
 
       return String(value);
    });
-}
+};
 
 /**
  * 字段映射，支持模板{{}}
@@ -56,7 +59,7 @@ export const fieldMapping = (fieldMap: Record<string, string>, data: any) => {
                tempReg.test(sourceFieldTemplate)
             ) {
                // 解析模板字符串
-               const sourceFieldValue = parseTemplate(
+               const sourceFieldValue = parseFieldTemplate(
                   sourceFieldTemplate,
                   item
                );

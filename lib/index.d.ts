@@ -201,6 +201,8 @@ export declare type IUrlInfo = {
     trace?: boolean;
 };
 
+export declare const parseFieldTemplate: (template: string, data: Record<string, any>) => string;
+
 /**
  * 请求数据结构
  * @param Option 可选，后端控制配置
