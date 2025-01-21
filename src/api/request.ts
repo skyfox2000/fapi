@@ -41,6 +41,8 @@ export const requestBefore = (
    urlInfo: IUrlInfo,
    config: Record<string, any>
 ): boolean | void => {
+   Object.assign(options, config, options);
+
    if (typeof urlInfo.header === "object") {
       options.header = urlInfo.header;
    } else if (typeof urlInfo.header === "function") {
@@ -52,7 +54,6 @@ export const requestBefore = (
    if (urlInfo.authorize) {
       // 需要授权
       const token = getToken(); // 获取 token
-
       if (!token) {
          // 如果没有 token，提示错误并返回 false
          const msg = "错误，接口需要授权才能访问！";
@@ -74,10 +75,8 @@ export const requestBefore = (
       }
    }
 
-   Object.assign(config, options);
-
    if (urlInfo.before) {
-      const res = urlInfo.before.call(urlInfo, config);
+      const res = urlInfo.before.call(urlInfo, options);
       if (res !== undefined) {
          return res;
       }

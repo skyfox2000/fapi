@@ -32,11 +32,15 @@ const request = <T>(
    const resultInfo: RequestResult<T> = {
       Result: null,
    };
+   const { header, ...rest } = options;
    // 发送请求
    return new Promise((resolve) => {
       axios
          .request({
-            ...options,
+            ...rest,
+            ...{
+               headers: header,
+            },
          })
          .then((res: AxiosResponse) => {
             requestSuccess(
