@@ -248,6 +248,7 @@ export declare type RequestOptions = {
     data?: any;
     /**
      * 设置请求的 header，header 中不能设置 Referer。
+     * 在axios中自动转换为headers
      */
     header?: any;
     /**
