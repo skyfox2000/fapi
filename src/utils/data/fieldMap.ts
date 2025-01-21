@@ -40,13 +40,13 @@ export const parseFieldTemplate = (
  * @param fieldMap 映射配置 { 转换后字段: 转换前或转换模板 }
  * @param data 数据：对象或者对象数组
  * @returns 转换结果
- */
-export const fieldMapping = (fieldMap: Record<string, string>, data: any) => {
+ */export const fieldMapping = (fieldMap: Record<string, string>, data: any) => {
    // 检查data是否是数组
    const isDataArray = Array.isArray(data);
 
    // 根据data是数组还是对象，进行遍历
    const dataArray = isDataArray ? data : [data];
+
    dataArray.forEach((item) => {
       // 确保item是一个对象
       if (item && typeof item === "object") {
@@ -69,6 +69,11 @@ export const fieldMapping = (fieldMap: Record<string, string>, data: any) => {
                // 如果不是模板字符串，直接赋值
                item[targetField] = item[sourceFieldTemplate];
             }
+         }
+
+         // 如果item有children字段，递归处理
+         if (item.children && Array.isArray(item.children)) {
+            item.children = fieldMapping(fieldMap, item.children);
          }
       }
    });
