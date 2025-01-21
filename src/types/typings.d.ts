@@ -141,10 +141,6 @@ export type RequestOptions = {
     */
    enableCookie?: boolean;
    /**
-    * 是否开启云加速（详见[云加速服务](https://smartprogram.baidu.com/docs/develop/extended/component-codeless/cloud-speed/introduction/)）
-    */
-   cloudCache?: object | boolean;
-   /**
     * 控制当前请求是否延时至首屏内容渲染后发送
     */
    defer?: boolean;
@@ -257,8 +253,18 @@ export type IUrlInfo = {
    storage?: StorageType;
    /**
     * 是否需要授权Token
+    * @param options 请求实际参数配置
+    * @param urlInfo 前端请求配置
+    * @param token 当前token
+    * @returns 是否允许调用接口
     */
-   authorize?: boolean;
+   authorize?:
+      | boolean
+      | ((
+           options: RequestOptions,
+           urlInfo: IUrlInfo,
+           token: string
+        ) => boolean);
    /**
     * 额外前端执行控制参数，不发送
     */

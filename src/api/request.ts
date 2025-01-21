@@ -19,16 +19,23 @@ const createId = init({
    fingerprint: "",
 });
 
-import { fieldMapping, toast } from "@/utils/index";
+import { fieldMapping, getToken, toast } from "@/utils/index";
 import { FrontCache } from "./cache";
 const PENDING_MAP: Record<string, Promise<ApiResponse<any> | null>> = {};
-import { requestConfig } from "./index";
+import { globalRequestOption } from "./index";
+import { deepClone } from "@/utils/data/deepClone";
 
 export type RequestResult<T> = {
    Result: ApiResponse<T> | null;
    Error?: ApiResponse;
 };
 
+/**
+ * 请求前置处理
+ * @param options 请求实际参数配置
+ * @param urlInfo 前端请求配置
+ * @param config 默认全局配置
+ */
 export const requestBefore = (
    options: RequestOptions,
    urlInfo: IUrlInfo,
@@ -41,6 +48,31 @@ export const requestBefore = (
    }
    if (!options.header) options.header = {};
    options.header.reqId = createId();
+
+   if (urlInfo.authorize) {
+      // 需要授权
+      const token = getToken(); // 获取 token
+
+      if (!token) {
+         // 如果没有 token，提示错误并返回 false
+         const msg = "错误，接口需要授权才能访问！";
+         console.error(msg);
+         toast.error({ title: msg });
+         return false;
+      }
+
+      if (typeof urlInfo.authorize === "boolean") {
+         // 如果是 boolean 类型且为 true，设置授权头
+         options.header.authorization = "Bearer " + token;
+      } else if (typeof urlInfo.authorize === "function") {
+         // 如果是 function 类型，调用函数并传入 options, urlInfo 和 token
+         const result = urlInfo.authorize(options, urlInfo, token);
+         if (result === false) {
+            // 如果函数返回 false，直接返回 false
+            return false;
+         }
+      }
+   }
 
    Object.assign(config, options);
 
@@ -142,7 +174,7 @@ export const requestComplete = <T>(
    ) => void
 ) => {
    if (resultInfo.Error) {
-      console.error(JSON.parse(JSON.stringify(urlInfo)), resultInfo.Error);
+      console.error(deepClone(urlInfo), resultInfo.Error);
       if (!urlInfo!.hideErrorToast) {
          toast.error({ title: resultInfo.Error.msg });
       }
@@ -155,8 +187,9 @@ export const requestComplete = <T>(
 
 /**
  * 发送请求
- * @param options uni.request 参数配置
- * @param urlInfo 请求配置
+ * @param options 请求实际参数配置
+ * @param urlInfo 前端请求配置
+ * @param request 请求接口
  * @returns Promise 数据类型
  */
 export const http = <T>(
@@ -167,7 +200,8 @@ export const http = <T>(
       urlInfo: IUrlInfo
    ) => Promise<ApiResponse<T> | null>
 ): Promise<ApiResponse<T> | null> => {
-   const config = JSON.parse(JSON.stringify(requestConfig));
+   // 默认全局配置
+   const config = deepClone(globalRequestOption);
    const beforeRes = requestBefore(options, urlInfo, config);
    /// 请求前判断参数是否合规，或者自定义处理headers，如果返回false，则取消执行调用API接口
    if (beforeRes === false) return Promise.resolve(null);

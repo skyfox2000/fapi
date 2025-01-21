@@ -1,3 +1,4 @@
+import { deepClone } from "./deepClone";
 import MD5 from "./md5";
 // 静态方法：生成哈希键
 export const hashKey = (input: string): string => {
@@ -12,7 +13,7 @@ export const generateKey = (
 ): string => {
    if (!params) return key;
    // 创建params的拷贝，以避免修改原始对象
-   let keyParams: Record<string, any> = JSON.parse(JSON.stringify(params));
+   let keyParams: Record<string, any> = deepClone(params);
 
    if (fields && fields.length > 0) {
       // 遍历fields数组，根据"+"或"-"来决定是否包含属性，只能是一种类型
