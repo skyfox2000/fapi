@@ -21,8 +21,13 @@ export declare type AnyJsonData =
 | (AnyJsonData | boolean | string | number)[];
 
 export declare const API_HOST: {
-    [key: string]: string;
+    [key: string]: string | API_HOST_EXTEND;
 };
+
+export declare interface API_HOST_EXTEND {
+    host: string;
+    authorize: boolean | ((options: RequestOptions, urlInfo: IUrlInfo, token: string) => boolean);
+}
 
 /**
  * 接口标准返回结果
@@ -58,6 +63,8 @@ export declare type CacheEntry = {
     lastModified: number;
 };
 
+export declare const deepClone: <T>(obj: T) => T;
+
 export declare const fieldMapping: (fieldMap: Record<string, string>, data: any) => any;
 
 export declare type FindResult<T = Record<string, AnyData>> = {
@@ -65,7 +72,9 @@ export declare type FindResult<T = Record<string, AnyData>> = {
     rows: T[];
 };
 
-export declare const globalRequestOption: (config: UniNamespace.RequestOptions) => void;
+export declare const getToken: () => string;
+
+export declare const globalRequestOption: (config: RequestOptions) => void;
 
 export declare const hostUrl: (urlInfo: IUrlInfo) => string | false;
 
@@ -162,8 +171,18 @@ export declare type IUrlInfo = {
     storage?: StorageType;
     /**
      * 是否需要授权Token
+     * @param options 请求实际参数配置
+     * @param urlInfo 前端请求配置
+     * @param token 当前token
+     * @returns 是否允许调用接口
      */
-    authorize?: boolean;
+    authorize?:
+    | boolean
+    | ((
+    options: RequestOptions,
+    urlInfo: IUrlInfo,
+    token: string
+    ) => boolean);
     /**
      * 额外前端执行控制参数，不发送
      */
@@ -217,8 +236,6 @@ export declare type ReqParams<T = AnyData> = {
     /** 需要保存或者处理的数据 */
     Data?: AnyData;
 };
-
-export declare const requestConfig: RequestOptions;
 
 export declare type RequestOptions = {
     /**
@@ -299,10 +316,6 @@ export declare type RequestOptions = {
      */
     enableCookie?: boolean;
     /**
-     * 是否开启云加速（详见[云加速服务](https://smartprogram.baidu.com/docs/develop/extended/component-codeless/cloud-speed/introduction/)）
-     */
-    cloudCache?: object | boolean;
-    /**
      * 控制当前请求是否延时至首屏内容渲染后发送
      */
     defer?: boolean;
@@ -325,6 +338,8 @@ export declare enum ResStatus {
 export declare const SERVER_HOST: {
     [key: string]: string;
 };
+
+export declare const setToken: (token: string) => void;
 
 declare interface ShowToastOptions {
     title?: string;
