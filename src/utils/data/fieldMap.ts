@@ -65,7 +65,7 @@ export const parseFieldTemplate = (
                );
                // 赋值到目标字段
                item[targetField] = sourceFieldValue;
-            } else {
+            } else if (item[sourceFieldTemplate] !== undefined) {
                // 如果不是模板字符串，直接赋值
                item[targetField] = item[sourceFieldTemplate];
             }
