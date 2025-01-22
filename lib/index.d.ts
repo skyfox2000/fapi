@@ -35,7 +35,7 @@ export declare interface API_HOST_EXTEND {
 export declare type ApiResponse<T = AnyData> = {
     /// 状态码
     status: ResStatus; /// success或者error
-    errno: number; /// 错误码
+    errno?: number; /// error时的错误码
     msg?: string;
     timestamp?: string; /// 请求时间: yyyy-MM-dd HH:mm:ss
     data?: T | FindResult;
@@ -210,6 +210,10 @@ export declare type IUrlInfo = {
      * @param result 结果数据
      */
     after?: (config: Record<string, any>, result: ApiResponse) => void;
+    /**
+     * 是否正在加载中
+     */
+    loading?: boolean;
     /**
      * 加载提示文字，设置为false时不显示，默认为通用文字
      */

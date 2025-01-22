@@ -24,6 +24,7 @@ import { FrontCache } from "./cache";
 const PENDING_MAP: Record<string, Promise<ApiResponse<any> | null>> = {};
 import { globalRequestOption } from "./index";
 import { deepClone } from "@/utils/data/deepClone";
+import { isEmpty } from "@/utils/data/isEmpty";
 
 export type RequestResult<T> = {
    Result: ApiResponse<T> | null;
@@ -207,15 +208,24 @@ export const http = <T>(
 
    if (options.method === "POST") {
       // 仅对查询判断是否有缓存结果
+      /**
+       * 缓存Key参数配置
+       */
+      const cacheKey = {
+         ...urlInfo,
+         key: urlInfo.url,
+         params: urlInfo.params,
+         fields: ["Query", "Option.SelectFields"],
+      };
       if (urlInfo.cacheTime) {
          // 缓存数据
-         const cacheData = FrontCache.get({
-            ...urlInfo,
-            key: urlInfo.url,
-            params: urlInfo.params,
-            fields: ["Query", "Option.SelectFields"],
-         });
-         if (cacheData) return Promise.resolve(cacheData);
+         const cacheData = FrontCache.get(cacheKey);
+         if (cacheData) {
+            return Promise.resolve({
+               status: ResStatus.SUCCESS,
+               data: cacheData as T,
+            } as ApiResponse);
+         }
       }
       /// 仅对查询进行自动PENDING
       const requestKey = generateKey(options.url, urlInfo.params, [
@@ -223,6 +233,7 @@ export const http = <T>(
          "Option.SelectFields",
       ]);
 
+      urlInfo.loading = true;
       const pendingInfo = PENDING_MAP[requestKey];
       // 检查是否有相同请求的pending状态
       if (pendingInfo) {
@@ -236,22 +247,18 @@ export const http = <T>(
          .then((result) => {
             if (typeof result === "boolean") return result;
             // 判断是否使用缓存
-            if (result?.status === ResStatus.SUCCESS && urlInfo.cacheTime) {
+            if (
+               result?.status === ResStatus.SUCCESS &&
+               !isEmpty(result?.data) &&
+               urlInfo.cacheTime
+            ) {
                // 缓存数据
-               FrontCache.set(
-                  {
-                     ...urlInfo,
-                     key: urlInfo.url,
-                     params: urlInfo.params,
-                     fields: ["Query", "Option.SelectFields"],
-                  },
-                  result?.data,
-                  urlInfo.cacheTime
-               );
+               FrontCache.set(cacheKey, result.data, urlInfo.cacheTime);
             }
             return result;
          })
          .finally(() => {
+            urlInfo.loading = false;
             delete PENDING_MAP[requestKey];
          });
 
