@@ -8,6 +8,32 @@
 ```shell
 npm install -S @skyfox2000/fapi
 ```
+## 更新说明
+### 1.1.8版本前修改
+- fix: url默认发送参数
+- fix: 缓存返回格式错误修改，缓存优化，
+- fix: 修改源字段必须存在
+- bug: 修复源数据字段必须存在
+- feat: fieldMapping增加对children的递归处理
+- feat: fieldMapping增加children递归处理
+- bug: Axios使用headers
+- bug: Axios使用headers
+- feat: 增加多种接口授权判断
+- feat: 增加多种接口授权判断
+- feat: 导出parseFieldTemplate方法解析模板
+- feat: md5优化，fieldMap优化，toast优化
+- feat: toast优化，增加cuid，md5优化
+- feat: 增加axios接口，优化代码，优化toast提示
+- doc: 后置处理更新
+- doc: 文档优化说明
+- doc: 优化接口方法说明
+- doc: 类型提示
+- build: 名称修改
+- build: 类型正确提示
+- build: 修改目标路径
+
+### 1.1.0版本修改
+- doc: 安装说明
 
 ## 功能清单
 
