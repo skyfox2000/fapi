@@ -78,7 +78,7 @@ export declare const globalRequestOption: (config: RequestOptions) => void;
 
 export declare const hostUrl: (urlInfo: IUrlInfo) => string | false;
 
-export declare const httpDelete: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const httpDelete: <T>(urlInfo: IUrlInfo, data: ReqParams) => Promise<ApiResponse<T> | null>;
 
 export declare const httpGet: <T>(urlInfo: IUrlInfo) => Promise<ApiResponse<T> | null>;
 
@@ -383,7 +383,7 @@ declare class Toast {
 
 export declare const toast: Toast;
 
-export declare const uniDelete: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const uniDelete: <T>(urlInfo: IUrlInfo, data: ReqParams) => Promise<ApiResponse<T> | null>;
 
 export declare const uniGet: <T>(urlInfo: IUrlInfo) => Promise<ApiResponse<T> | null>;
 
