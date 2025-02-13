@@ -88,7 +88,7 @@ export const uniPut = <T>(
          url,
          dataType: "json",
          method: "PUT",
-         data,
+         data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
          loadingText: "正在存储数据……",
       },
@@ -105,7 +105,7 @@ export const uniPut = <T>(
  */
 export const uniDelete = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -140,7 +140,7 @@ export const uniPost = <T>(
          url,
          dataType: "json",
          method: "POST",
-         data,
+         data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
          loadingText: urlInfo.loadingText ?? "数据加载中……",
       },

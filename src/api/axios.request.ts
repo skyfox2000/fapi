@@ -121,7 +121,7 @@ export const httpPut = <T>(
          url,
          dataType: "json",
          method: "PUT",
-         data,
+         data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
          loadingText: "正在存储数据……",
       },
@@ -138,7 +138,7 @@ export const httpPut = <T>(
  */
 export const httpDelete = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data: ReqParams
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -147,7 +147,7 @@ export const httpDelete = <T>(
          url,
          dataType: "json",
          method: "DELETE",
-         data,
+         data: data,
          timeout: urlInfo.timeout,
          loadingText: "正在删除数据……",
       },
@@ -173,7 +173,7 @@ export const httpPost = <T>(
          url,
          dataType: "json",
          method: "POST",
-         data,
+         data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
          loadingText: urlInfo.loadingText ?? "数据加载中……",
       },
