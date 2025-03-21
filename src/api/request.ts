@@ -21,7 +21,6 @@ const createId = init({
 
 import { fieldMapping, getToken, toast } from "@/utils/index";
 import { FrontCache } from "./cache";
-const PENDING_MAP: Record<string, Promise<ApiResponse<any> | null>> = {};
 import { globalRequestOption } from "./index";
 import { deepClone } from "@/utils/data/deepClone";
 import { isEmpty } from "@/utils/data/isEmpty";
@@ -30,6 +29,18 @@ export type RequestResult<T> = {
    Result: ApiResponse<T> | null;
    Error?: ApiResponse;
 };
+
+// 1、存储3个值，sharedPromise， 结果， 结果有效期3秒
+// 2、只有有结果才有有效期，有结果返回结果，没有结果等待sharedPromise返回
+// 3、有效期过期则删除对象
+type PendingInfo = {
+   sharedPromise: Promise<ApiResponse<any> | null>;
+   result?: ApiResponse<any> | null;
+   expire?: number;
+};
+const PENDING_MAP: Record<string, PendingInfo> = {};
+// 动态缓存结果有效期，避免页面短时间多次调用相同接口
+const PENDING_MAP_EXPIRE = 2000;
 
 /**
  * 请求前置处理
@@ -174,10 +185,18 @@ export const requestComplete = <T>(
    ) => void
 ) => {
    if (resultInfo.Error) {
+      toast.hide();
       console.error(deepClone(urlInfo), resultInfo.Error);
       if (!urlInfo!.hideErrorToast) {
          toast.error({ title: resultInfo.Error.msg });
       }
+      resultInfo.Result = {
+         status: ResStatus.ERROR,
+         errno: resultInfo.Error.errno,
+         msg: resultInfo.Error.msg,
+         timestamp: resultInfo.Result?.timestamp,
+         data: resultInfo.Result?.data,
+      } as ApiResponse<T>;
    } else {
       toast.hide(1000);
    }
@@ -214,7 +233,7 @@ export const http = <T>(
       const cacheKey = {
          ...urlInfo,
          key: urlInfo.url,
-         params: urlInfo.params,
+         params: options.data,
          fields: ["Query", "Option.SelectFields"],
       };
       if (urlInfo.cacheTime) {
@@ -228,20 +247,30 @@ export const http = <T>(
          }
       }
       /// 仅对查询进行自动PENDING
-      const requestKey = generateKey(options.url, urlInfo.params, [
+      const requestKey = generateKey(options.url,  options.data, [
          "Query",
          "Option.SelectFields",
       ]);
 
-      urlInfo.loading = true;
       const pendingInfo = PENDING_MAP[requestKey];
       // 检查是否有相同请求的pending状态
       if (pendingInfo) {
-         return new Promise((resolve) => {
-            pendingInfo.then(resolve);
-         });
+         if (pendingInfo.expire && pendingInfo.expire < Date.now()) {
+            // 过期删除
+            delete PENDING_MAP[requestKey];
+         } else if (!pendingInfo.expire) {
+            // 没有过期时间，等待请求
+            return new Promise((resolve) => {
+               pendingInfo.sharedPromise.then(resolve);
+            });
+         } else {
+            toast.hide(1000);
+            // 有结果，返回结果
+            return Promise.resolve(pendingInfo.result!);
+         }
       }
 
+      urlInfo.loading = true;
       // 创建一个新的共享Promise
       const sharedPromise = request<T>(options, urlInfo)
          .then((result) => {
@@ -255,15 +284,21 @@ export const http = <T>(
                // 缓存数据
                FrontCache.set(cacheKey, result.data, urlInfo.cacheTime);
             }
+            let newPendingInfo = PENDING_MAP[requestKey] as PendingInfo;
+            newPendingInfo.result = result;
+            newPendingInfo.expire = Date.now() + PENDING_MAP_EXPIRE;
+            /// 缓存结果3秒
+            PENDING_MAP[requestKey] = newPendingInfo;
             return result;
          })
          .finally(() => {
             urlInfo.loading = false;
-            delete PENDING_MAP[requestKey];
          });
 
       // 存储共享的Promise
-      PENDING_MAP[requestKey] = sharedPromise;
+      PENDING_MAP[requestKey] = {
+         sharedPromise
+      } as PendingInfo;
 
       return sharedPromise;
    } else {
