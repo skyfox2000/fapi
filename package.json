@@ -1,6 +1,6 @@
 {
    "name": "@skyfox2000/fapi",
-   "version": "1.1.10",
+   "version": "1.1.12",
    "description": "一个扩展的HTTP请求库，支持UniApp和Axios两种方式，支持请求合并、缓存、字段映射、前置/后置处理等高级功能的轻量级封装",
    "type": "module",
    "keywords": [],

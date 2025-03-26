@@ -1,4 +1,4 @@
-import Message from "vue-m-message";
+import Message, { MessageIntance } from "vue-m-message";
 
 type ToastType = "success" | "error" | "warning" | "none" | "loading";
 
@@ -63,6 +63,7 @@ interface ShowToastOptions {
 }
 
 class Toast {
+   private currentToast: MessageIntance[] = [];
    private defaultOptions: ShowToastOptions = {
       closable: false,
       duration: 3000,
@@ -109,16 +110,22 @@ class Toast {
 
    public hide(delay?: number): void {
       delay = delay || 0 > 0 ? delay : 0;
-      if (delay === 0) this.close();
-      else setTimeout(this.close, delay);
+      const listKeys = this.currentToast.map((toast) => toast.id);
+      if (delay === 0) this.close(listKeys);
+      else setTimeout(() => this.close(listKeys), delay);
    }
 
-   private close() {
+   private close(listKeys: string[]) {
       if (typeof uni !== "undefined" && uni.hideToast) {
          // 如果存在 uni 库，则使用 uni 的 hideToast 方法
          uni.hideToast();
       } else {
-         Message.closeAll();
+         /// 关闭时的所有toast
+         listKeys.forEach((key) => {
+            this.currentToast.find((toast) => toast.id === key)?.close();
+         });
+         /// 删除指定时的所有toast
+         this.currentToast = this.currentToast.filter((toast) => !listKeys.includes(toast.id));
       }
    }
 
@@ -143,7 +150,7 @@ class Toast {
          this.hide();
          switch (icon) {
             case "success":
-               Message.success(title, {
+               this.currentToast.push(Message.success(title, {
                   ...options,
                   title: "",
                   position: "top-center",
@@ -153,20 +160,20 @@ class Toast {
                   closeOnClick: true,
                   pauseOnFocusLoss: true,
                   pauseOnHover: true,
-               });
+               }));
                break;
             case "error":
-               Message.error(title, {
+               this.currentToast.push(Message.error(title, {
                   ...options,
                   title: "",
                   position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,
-               });
+               }));
                break;
             case "loading":
-               Message.loading(title, {
+               this.currentToast.push(Message.loading(title, {
                   ...options,
                   title: "",
                   position: "top-center",
@@ -174,17 +181,17 @@ class Toast {
                   type: toastType,
                   icon: toastType,
                   duration: -1, // 不自动关闭
-               });
+               }));
                break;
             default:
-               Message.info(title, {
+               this.currentToast.push(Message.info(title, {
                   ...options,
                   title: "",
                   position: "top-center",
                   hasMask: mask,
                   type: toastType,
                   icon: toastType,
-               });
+               }));
                break;
          }
       }

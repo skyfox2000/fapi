@@ -369,6 +369,7 @@ declare interface ShowToastOptions {
 export declare type StorageType = "memory" | "local" | "session" | "uni";
 
 declare class Toast {
+    private currentToast;
     private defaultOptions;
     private showToast;
     success(options: ShowToastOptions | string): void;
