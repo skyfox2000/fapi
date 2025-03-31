@@ -9,8 +9,3 @@ const requestConfig: RequestOptions = {
 export const globalRequestOption = (config: RequestOptions) => {
    Object.assign(requestConfig, config);
 };
-
-export * from "@/api/api";
-export * from "@/api/host";
-export * from "@/api/uni.request";
-export * from "@/api/axios.request";

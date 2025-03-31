@@ -1,6 +1,6 @@
 import { API_HOST } from "@/api/api";
 import { IUrlInfo } from "@/types/typings";
-import { toast } from "@/utils/index";
+import toast  from "@/utils/toast";
 
 /**
  * 组合域名 + Url地址

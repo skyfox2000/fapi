@@ -26,12 +26,14 @@ export const FrontCache = {
          key,
          params,
          fields,
+         fieldMap,
          lastModified,
          storage = "memory",
       }: {
          key: string;
          params?: Record<string, any>;
          fields?: string[];
+         fieldMap?: Record<string, string>;
          lastModified?: number;
          storage?: StorageType;
       },
@@ -39,7 +41,7 @@ export const FrontCache = {
       timeout: number = -1
    ): void {
       if (data === null || data === undefined) return;
-      const cacheKey = generateKey(key, params, fields);
+      const cacheKey = generateKey(key, params, fieldMap, fields);
       const expireAt = timeout !== -1 ? Date.now() + timeout : undefined;
       const storageKey = `frontCache::${cacheKey}`;
       const cacheData = {
@@ -81,14 +83,16 @@ export const FrontCache = {
       key,
       params,
       fields,
+      fieldMap,
       storage = "memory",
    }: {
       key: string;
       params?: Record<string, any>;
       fields?: string[];
+      fieldMap?: Record<string, string>;
       storage?: StorageType;
    }): any | null {
-      const cacheKey = generateKey(key, params, fields);
+      const cacheKey = generateKey(key, params, fieldMap, fields);
       const storageKey = `frontCache::${cacheKey}`;
       let cacheEntry: CacheEntry | null = null;
       let stored = undefined;
@@ -139,14 +143,16 @@ export const FrontCache = {
       key,
       params,
       fields,
+      fieldMap,
       storage = "memory",
    }: {
       key: string;
       params?: Record<string, any>;
       fields?: string[];
+      fieldMap?: Record<string, string>;
       storage?: StorageType;
    }): void {
-      const cacheKey = generateKey(key, params, fields);
+      const cacheKey = generateKey(key, params, fieldMap, fields);
       const storageKey = `frontCache::${cacheKey}`;
 
       switch (storage) {

@@ -11,6 +11,13 @@ export default defineConfig({
          insertTypesEntry: true,
          rollupTypes: true,
          copyDtsFiles: true,
+         include: ["src/**/*.ts", "src/**/*.d.ts"],
+         exclude: ["node_modules", "lib"],
+         compilerOptions: {
+            emitDeclarationOnly: true,
+            declaration: true,
+            declarationDir: "lib",
+         }
       }),
       visualizer({
          emitFile: false,

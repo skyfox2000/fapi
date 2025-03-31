@@ -1,6 +1,6 @@
 import { ResponseType as ResponseType_2 } from 'axios';
 
-export declare type AjaxResponse = {
+declare type AjaxResponse = {
     statusCode: number;
     data: AnyData;
 };
@@ -41,28 +41,6 @@ export declare type ApiResponse<T = AnyData> = {
     data?: T | FindResult;
 };
 
-/**
- * 前端缓存
- */
-export declare type CacheEntry = {
-    /**
-     * 缓存数据
-     */
-    data: AnyJsonData;
-    /**
-     * 是否JSON
-     */
-    json: boolean;
-    /**
-     * 超时时间
-     */
-    expireAt: number;
-    /**
-     * 最后修改时间
-     */
-    lastModified: number;
-};
-
 export declare const deepClone: <T>(obj: T) => T;
 
 export declare const fieldMapping: (fieldMap: Record<string, string>, data: any) => any;
@@ -70,6 +48,31 @@ export declare const fieldMapping: (fieldMap: Record<string, string>, data: any)
 export declare type FindResult<T = Record<string, AnyData>> = {
     total: number;
     rows: T[];
+};
+
+export declare const FrontCache: {
+    set({ key, params, fields, fieldMap, lastModified, storage, }: {
+        key: string;
+        params?: Record<string, any>;
+        fields?: string[];
+        fieldMap?: Record<string, string>;
+        lastModified?: number;
+        storage?: StorageType;
+    }, data: any, timeout?: number): void;
+    get({ key, params, fields, fieldMap, storage, }: {
+        key: string;
+        params?: Record<string, any>;
+        fields?: string[];
+        fieldMap?: Record<string, string>;
+        storage?: StorageType;
+    }): any | null;
+    remove({ key, params, fields, fieldMap, storage, }: {
+        key: string;
+        params?: Record<string, any>;
+        fields?: string[];
+        fieldMap?: Record<string, string>;
+        storage?: StorageType;
+    }): void;
 };
 
 export declare const getToken: () => string;
@@ -91,14 +94,6 @@ export declare const ICON_HOST: {
 };
 
 export declare const isJSON: (value: any) => boolean;
-
-export declare type IUniUploadFileOptions = {
-    file?: File;
-    files?: UniApp.UploadFileOptionFiles[];
-    filePath?: string;
-    name?: string;
-    formData?: any;
-};
 
 /**
  * Url接口配置信息
@@ -241,7 +236,7 @@ export declare type ReqParams<T = AnyData> = {
     Data?: AnyData;
 };
 
-export declare type RequestOptions = {
+declare type RequestOptions = {
     /**
      * 资源url
      */

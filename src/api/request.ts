@@ -19,7 +19,9 @@ const createId = init({
    fingerprint: "",
 });
 
-import { fieldMapping, getToken, toast } from "@/utils/index";
+import toast from "@/utils/toast";
+import { fieldMapping } from "@/utils/data/fieldMap";
+import { getToken } from "@/utils/call/auth";
 import { FrontCache } from "./cache";
 import { globalRequestOption } from "./index";
 import { deepClone } from "@/utils/data/deepClone";
@@ -235,6 +237,7 @@ export const http = <T>(
          key: urlInfo.url,
          params: options.data,
          fields: ["Query", "Option.SelectFields"],
+         fieldMap: urlInfo.fieldMap,
       };
       if (urlInfo.cacheTime) {
          // 缓存数据
@@ -247,7 +250,7 @@ export const http = <T>(
          }
       }
       /// 仅对查询进行自动PENDING
-      const requestKey = generateKey(options.url,  options.data, [
+      const requestKey = generateKey(options.url,  options.data, urlInfo.fieldMap, [
          "Query",
          "Option.SelectFields",
       ]);
