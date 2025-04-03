@@ -4,11 +4,13 @@ export type {
   AnyJsonData,
   AnyData,
   FindResult,
-  ResStatus,
   ApiResponse,
   ReqParams,
   IUrlInfo
 } from "@/types/typings.d"
+
+// 从types/typings.d导出枚举
+export { ResStatus } from "@/types/typings.d"
 
 // 从api导出
 export { globalRequestOption } from "@/api/index"

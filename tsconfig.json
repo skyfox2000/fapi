@@ -1,36 +1,42 @@
 {
    "compilerOptions": {
       "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-      "declaration": true,
-      "emitDeclarationOnly": false,
-      "esModuleInterop": true,
-      "target": "ESNext",
-      "useDefineForClassFields": true,
-      "module": "ESNext",
-      "lib": ["ES2020", "DOM", "DOM.Iterable"],
-      "skipLibCheck": true,
-      "removeComments": true,
-      "forceConsistentCasingInFileNames": true,
-      "composite": true,
-      "allowSyntheticDefaultImports": true,
-      "moduleResolution": "Bundler",
-      "resolveJsonModule": true,
-      "isolatedModules": true,
-      "noEmit": false,
-      "jsx": "preserve",
-      "strict": true,
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
-      "noFallthroughCasesInSwitch": true,
-      "baseUrl": ".",
-      "paths": {
-         "@/*": ["src/*"],
-      },
-      "typeRoots": ["./node_modules/@types"],
-      "rootDir": "src",
-      "outDir": "lib",
-      "preserveConstEnums": true
+     "declaration": true,
+     "emitDeclarationOnly": false,
+     "esModuleInterop": true,
+     "target": "ESNext",
+     "useDefineForClassFields": true,
+     "module": "ESNext",
+     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+     "skipLibCheck": true,
+     "removeComments": true,
+     "forceConsistentCasingInFileNames": true,
+
+     "composite": true,
+     "allowSyntheticDefaultImports": true,
+
+     /* Bundler mode */
+     "moduleResolution": "Bundler",
+     "resolveJsonModule": true,
+     "isolatedModules": true,
+     "noEmit": false,
+     "jsx": "preserve",
+
+     /* Linting */
+     "strict": true,
+     "noUnusedLocals": true,
+     "noUnusedParameters": true,
+     "noFallthroughCasesInSwitch": true,
+     "baseUrl": ".", // 解析非相对模块的基地址，默认是当前目录
+     "paths": {
+       //路径映射，相对于baseUrl
+       "@/*": ["src/*"],
+     },
+     "typeRoots" : ["./node_modules/@types"],
+     "rootDir": "src",
+     "outDir": "lib",
+     "preserveConstEnums": true
    },
    "include": ["src/**/**.ts", "src/**/**.d.ts", "src/**/**.vue"],
    "exclude": ["node_modules"]
-}
+ }
