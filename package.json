@@ -1,6 +1,6 @@
 {
    "name": "@skyfox2000/fapi",
-   "version": "1.1.17",
+   "version": "1.1.18",
    "description": "一个扩展的HTTP请求库，支持UniApp和Axios两种方式，支持请求合并、缓存、字段映射、前置/后置处理等高级功能的轻量级封装",
    "type": "module",
    "keywords": [],
@@ -21,17 +21,20 @@
       "build": "tsc -b && vite build",
       "test": "echo \"Error: no test specified\" && exit 1"
    },
+   "dependencies": {
+      "@paralleldrive/cuid2": "^2.2.2"
+   },
+   "peerDependencies": {
+      "axios": "^1.8.4",
+      "vue-m-message": "^4.0.2",
+      "vue": "^3.5.13"
+   },
    "devDependencies": {
       "@dcloudio/types": "^3.4.14",
       "@types/crypto-js": "^4.2.2",
-      "axios": "^1.7.9",
       "rollup-plugin-visualizer": "^5.12.0",
       "typescript": "^5.7.2",
       "vite": "^6.2.3",
       "vite-plugin-dts": "^4.3.0"
-   },
-   "dependencies": {
-      "@paralleldrive/cuid2": "^2.2.2",
-      "vue-m-message": "^4.0.2"
    }
 }

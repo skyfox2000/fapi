@@ -17,7 +17,7 @@ export default defineConfig({
             emitDeclarationOnly: true,
             declaration: true,
             declarationDir: "lib",
-         }
+         },
       }),
       visualizer({
          emitFile: false,
@@ -40,7 +40,7 @@ export default defineConfig({
       },
       rollupOptions: {
          // 外部化处理那些你并不打算打包进库的依赖
-         external: ["vue", "axios", "crypto-js", "vue-m-message"],
+         external: ["vue", "axios", "vue-m-message"],
          // 如果你使用 TypeScript，则需要提供类型声明文件的输出路径
          output: [
             {
