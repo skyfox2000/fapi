@@ -81,13 +81,13 @@ export declare const globalRequestOption: (config: RequestOptions) => void;
 
 export declare const hostUrl: (urlInfo: IUrlInfo) => string | false;
 
-export declare const httpDelete: <T>(urlInfo: IUrlInfo, data: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const httpDelete: <T>(urlInfo: IUrlInfo, data: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
 export declare const httpGet: <T>(urlInfo: IUrlInfo) => Promise<ApiResponse<T> | null>;
 
-export declare const httpPost: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const httpPost: <T>(urlInfo: IUrlInfo, data?: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
-export declare const httpPut: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const httpPut: <T>(urlInfo: IUrlInfo, data?: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
 export declare const ICON_HOST: {
     [key: string]: any;
@@ -132,6 +132,15 @@ export declare type IUrlInfo = {
      * 接口地址
      */
     url: string;
+    /**
+     * 请求方法
+     * 默认POST
+     */
+    method?: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE";
+    /**
+     * 原始数据，不进行格式判断，直接返回
+     */
+    raw?: boolean;
     /**
      * 超时时间，默认5秒
      */
@@ -202,9 +211,9 @@ export declare type IUrlInfo = {
     /**
      * 调用后置处理
      * @param config 请求参数
-     * @param result 结果数据
+     * @param result 结果数据 - 原始模式时为任意类型，标准模式时为 ApiResponse
      */
-    after?: (config: Record<string, any>, result: ApiResponse) => void;
+    after?: (config: Record<string, any>, result: ApiResponse | any) => void;
     /**
      * 是否正在加载中
      */
@@ -349,6 +358,7 @@ declare interface ShowToastOptions {
     duration?: number;
     position?: "top" | "center" | "bottom" | "top-center";
     mask?: boolean;
+    zIndex?: number;
     success?: () => void;
     fail?: () => void;
     complete?: () => void;
@@ -379,13 +389,13 @@ declare class Toast {
 
 export declare const toast: Toast;
 
-export declare const uniDelete: <T>(urlInfo: IUrlInfo, data: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const uniDelete: <T>(urlInfo: IUrlInfo, data: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
 export declare const uniGet: <T>(urlInfo: IUrlInfo) => Promise<ApiResponse<T> | null>;
 
-export declare const uniPost: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const uniPost: <T>(urlInfo: IUrlInfo, data?: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
-export declare const uniPut: <T>(urlInfo: IUrlInfo, data?: ReqParams) => Promise<ApiResponse<T> | null>;
+export declare const uniPut: <T>(urlInfo: IUrlInfo, data?: ReqParams | any) => Promise<ApiResponse<T> | null>;
 
 export { }
 

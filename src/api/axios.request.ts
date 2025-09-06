@@ -107,12 +107,12 @@ export const httpGet = <T>(
 /**
  * PUT 处理及存储数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const httpPut = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data?: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -133,12 +133,12 @@ export const httpPut = <T>(
 /**
  * DELETE 删除数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const httpDelete = <T>(
    urlInfo: IUrlInfo,
-   data: ReqParams
+   data: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -159,12 +159,12 @@ export const httpDelete = <T>(
 /**
  * POST 查询数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const httpPost = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data?: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);

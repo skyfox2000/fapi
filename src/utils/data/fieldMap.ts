@@ -14,7 +14,7 @@ export const parseFieldTemplate = (
 ): string => {
    return template.replace(tempReg, (match: string, key: string) => {
       const keys = key.split(".");
-      let value: any = data;
+      let value: Record<string, any> = data;
 
       for (const k of keys) {
          if (k.includes("[") && k.includes("]")) {
@@ -23,7 +23,7 @@ export const parseFieldTemplate = (
             const index = parseInt(k.split("[")[1].split("]")[0]);
             value = value[arrayKey]?.[index];
          } else {
-            value = value?.[k];
+            value = value[k];
          }
 
          if (value === undefined) {
@@ -40,7 +40,10 @@ export const parseFieldTemplate = (
  * @param fieldMap 映射配置 { 转换后字段: 转换前或转换模板 }
  * @param data 数据：对象或者对象数组
  * @returns 转换结果
- */export const fieldMapping = (fieldMap: Record<string, string>, data: any) => {
+ */ export const fieldMapping = (
+   fieldMap: Record<string, string>,
+   data: any
+) => {
    // 检查data是否是数组
    const isDataArray = Array.isArray(data);
 

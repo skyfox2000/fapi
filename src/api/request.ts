@@ -70,7 +70,7 @@ export const requestBefore = (
       const token = getToken(); // 获取 token
       if (!token) {
          // 如果没有 token，提示错误并返回 false
-         const msg = "错误，接口需要授权才能访问！";
+         const msg = `错误，接口 ${urlInfo.url} 需要授权才能访问！`;
          console.error(msg);
          toast.error({ title: msg });
          return false;
@@ -95,23 +95,27 @@ export const requestBefore = (
          return res;
       }
    }
-
-   if (options.loadingText) {
-      toast.loading({
-         title: options.loadingText.toString(),
-      });
-   }
 };
 
 export const requestSuccess = <T>(
-   config: any,
+   config: RequestOptions,
    urlInfo: IUrlInfo,
    res: AjaxResponse,
    resultInfo: RequestResult<T>
 ) => {
    // 状态码 2xx
    if (res.statusCode >= 200 && res.statusCode < 400) {
-      // 2.1 提取核心数据 res.data
+      // 原始模式：直接返回原始数据，不做任何处理
+      if (urlInfo.raw) {
+         const resData = res.data;
+         if (urlInfo.after) {
+            urlInfo.after!.call(urlInfo, config, resData);
+         }
+         resultInfo.Result = resData as any;
+         return;
+      }
+
+      // 标准模式：2.1 提取核心数据 res.data
       const resData = res.data as ApiResponse<T>;
       if (resData.status === ResStatus.SUCCESS) {
          // 核心数据处理
@@ -158,6 +162,19 @@ export const requestSuccess = <T>(
       }
 
       message = `${statusCode}: ${message}`;
+
+      // 原始模式：直接返回错误信息
+      if (urlInfo.raw) {
+         const err = {
+            status: ResStatus.ERROR,
+            errno: statusCode + 1000,
+            msg: message,
+         };
+         resultInfo.Error = err;
+         return;
+      }
+
+      // 标准模式：返回 ApiResponse 格式错误
       const err: ApiResponse = {
          status: ResStatus.ERROR,
          errno: statusCode + 1000,
@@ -186,24 +203,32 @@ export const requestComplete = <T>(
       value: ApiResponse<T> | PromiseLike<ApiResponse<T> | null> | null
    ) => void
 ) => {
-   if (resultInfo.Error) {
+   const showLoading = urlInfo.loadingText ? 500 : 0;
+   setTimeout(() => {
       toast.hide();
-      console.error(deepClone(urlInfo), resultInfo.Error);
-      if (!urlInfo!.hideErrorToast) {
-         toast.error({ title: resultInfo.Error.msg });
+      if (resultInfo.Error) {
+         console.error(deepClone(urlInfo), resultInfo.Error);
+         if (!urlInfo!.hideErrorToast) {
+            toast.error({ title: resultInfo.Error.msg });
+         }
+
+         // 原始模式：直接返回错误信息
+         if (urlInfo.raw) {
+            resultInfo.Result = resultInfo.Error as any;
+         } else {
+            // 标准模式：返回 ApiResponse 格式
+            resultInfo.Result = {
+               status: ResStatus.ERROR,
+               errno: resultInfo.Error.errno,
+               msg: resultInfo.Error.msg,
+               timestamp: resultInfo.Result?.timestamp,
+               data: resultInfo.Result?.data,
+            } as ApiResponse<T>;
+         }
       }
-      resultInfo.Result = {
-         status: ResStatus.ERROR,
-         errno: resultInfo.Error.errno,
-         msg: resultInfo.Error.msg,
-         timestamp: resultInfo.Result?.timestamp,
-         data: resultInfo.Result?.data,
-      } as ApiResponse<T>;
-   } else {
-      toast.hide(1000);
-   }
-   // 调用接口结束
-   resolve(resultInfo.Result);
+      // 调用接口结束
+      resolve(resultInfo.Result);
+   }, showLoading);
 };
 
 /**
@@ -226,6 +251,17 @@ export const http = <T>(
    const beforeRes = requestBefore(options, urlInfo, config);
    /// 请求前判断参数是否合规，或者自定义处理headers，如果返回false，则取消执行调用API接口
    if (beforeRes === false) return Promise.resolve(null);
+   
+   if (options.loadingText) {
+      toast.loading({
+         title: options.loadingText.toString(),
+      });
+   }
+
+   // 原始模式：跳过缓存和字段映射等处理，直接请求
+   if (urlInfo.raw) {
+      return request<T>(options, urlInfo);
+   }
 
    if (options.method === "POST") {
       // 仅对查询判断是否有缓存结果
@@ -243,17 +279,22 @@ export const http = <T>(
          // 缓存数据
          const cacheData = FrontCache.get(cacheKey);
          if (cacheData) {
-            return Promise.resolve({
-               status: ResStatus.SUCCESS,
-               data: cacheData as T,
-            } as ApiResponse);
+            setTimeout(() => {
+               toast.hide();
+               return Promise.resolve({
+                  status: ResStatus.SUCCESS,
+                  data: cacheData as T,
+               } as ApiResponse);
+            }, 500);
          }
       }
       /// 仅对查询进行自动PENDING
-      const requestKey = generateKey(options.url,  options.data, urlInfo.fieldMap, [
-         "Query",
-         "Option.SelectFields",
-      ]);
+      const requestKey = generateKey(
+         options.url,
+         options.data,
+         urlInfo.fieldMap,
+         ["Query", "Option.SelectFields"]
+      );
 
       const pendingInfo = PENDING_MAP[requestKey];
       // 检查是否有相同请求的pending状态
@@ -264,16 +305,24 @@ export const http = <T>(
          } else if (!pendingInfo.expire) {
             // 没有过期时间，等待请求
             return new Promise((resolve) => {
-               pendingInfo.sharedPromise.then(resolve);
+               setTimeout(() => {
+                  toast.hide();
+                  pendingInfo.sharedPromise.then(resolve);
+               }, 500);
             });
          } else {
-            toast.hide(1000);
             // 有结果，返回结果
-            return Promise.resolve(pendingInfo.result!);
+            return new Promise((resolve) => {
+               setTimeout(() => {
+                  toast.hide();
+                  resolve(pendingInfo.result!);
+               }, 500);
+            });
          }
       }
 
       urlInfo.loading = true;
+
       // 创建一个新的共享Promise
       const sharedPromise = request<T>(options, urlInfo)
          .then((result) => {
@@ -300,7 +349,7 @@ export const http = <T>(
 
       // 存储共享的Promise
       PENDING_MAP[requestKey] = {
-         sharedPromise
+         sharedPromise,
       } as PendingInfo;
 
       return sharedPromise;

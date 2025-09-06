@@ -221,6 +221,15 @@ export type IUrlInfo = {
     */
    url: string;
    /**
+    * 请求方法
+    * 默认POST
+    */
+   method?: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE";
+   /**
+    * 原始数据，不进行格式判断，直接返回
+    */
+   raw?: boolean;
+   /**
     * 超时时间，默认5秒
     */
    timeout?: number;
@@ -290,9 +299,9 @@ export type IUrlInfo = {
    /**
     * 调用后置处理
     * @param config 请求参数
-    * @param result 结果数据
+    * @param result 结果数据 - 原始模式时为任意类型，标准模式时为 ApiResponse
     */
-   after?: (config: Record<string, any>, result: ApiResponse) => void;
+   after?: (config: Record<string, any>, result: ApiResponse | any) => void;
    /**
     * 是否正在加载中
     */

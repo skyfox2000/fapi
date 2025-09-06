@@ -74,12 +74,12 @@ export const uniGet = <T>(
 /**
  * PUT 处理及存储数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const uniPut = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data?: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -100,12 +100,12 @@ export const uniPut = <T>(
 /**
  * DELETE 删除数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const uniDelete = <T>(
    urlInfo: IUrlInfo,
-   data: ReqParams
+   data: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);
@@ -126,12 +126,12 @@ export const uniDelete = <T>(
 /**
  * POST 查询数据
  * @param urlInfo 后台地址
- * @param data 请求body参数
+ * @param data 请求body参数 - 原始模式时支持任意类型
  * @returns
  */
 export const uniPost = <T>(
    urlInfo: IUrlInfo,
-   data?: ReqParams
+   data?: ReqParams | any
 ): Promise<ApiResponse<T> | null> => {
    const url = hostUrl(urlInfo);
    if (url === false) return Promise.resolve(null);

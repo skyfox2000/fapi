@@ -47,6 +47,11 @@ interface ShowToastOptions {
    mask?: boolean;
 
    /**
+    * 提示框的层级，默认：9999
+    */
+   zIndex?: number;
+
+   /**
     * 接口调用成功的回调函数
     */
    success?: () => void;
@@ -70,6 +75,7 @@ class Toast {
       icon: "none",
       mask: false,
       position: "center",
+      zIndex: 9999,
    };
 
    private showToast(
@@ -125,7 +131,9 @@ class Toast {
             this.currentToast.find((toast) => toast.id === key)?.close();
          });
          /// 删除指定时的所有toast
-         this.currentToast = this.currentToast.filter((toast) => !listKeys.includes(toast.id));
+         this.currentToast = this.currentToast.filter(
+            (toast) => !listKeys.includes(toast.id)
+         );
       }
    }
 
@@ -150,48 +158,60 @@ class Toast {
          this.hide();
          switch (icon) {
             case "success":
-               this.currentToast.push(Message.success(title, {
-                  ...options,
-                  title: "",
-                  position: "top-center",
-                  hasMask: mask,
-                  type: toastType,
-                  icon: toastType,
-                  closeOnClick: true,
-                  pauseOnFocusLoss: true,
-                  pauseOnHover: true,
-               }));
+               this.currentToast.push(
+                  Message.success(title, {
+                     ...options,
+                     title: "",
+                     position: "top-center",
+                     hasMask: mask,
+                     type: toastType,
+                     icon: toastType,
+                     closeOnClick: true,
+                     pauseOnFocusLoss: true,
+                     pauseOnHover: true,
+                     zIndex: options.zIndex || 9999,
+                  })
+               );
                break;
             case "error":
-               this.currentToast.push(Message.error(title, {
-                  ...options,
-                  title: "",
-                  position: "top-center",
-                  hasMask: mask,
-                  type: toastType,
-                  icon: toastType,
-               }));
+               this.currentToast.push(
+                  Message.error(title, {
+                     ...options,
+                     title: "",
+                     position: "top-center",
+                     hasMask: mask,
+                     type: toastType,
+                     icon: toastType,
+                     zIndex: options.zIndex || 9999,
+                  })
+               );
                break;
             case "loading":
-               this.currentToast.push(Message.loading(title, {
-                  ...options,
-                  title: "",
-                  position: "top-center",
-                  hasMask: mask,
-                  type: toastType,
-                  icon: toastType,
-                  duration: -1, // 不自动关闭
-               }));
+               this.currentToast.push(
+                  Message.loading(title, {
+                     ...options,
+                     title: "",
+                     position: "top-center",
+                     hasMask: mask,
+                     type: toastType,
+                     icon: toastType,
+                     duration: -1, // 不自动关闭
+                     zIndex: options.zIndex || 9999,
+                  })
+               );
                break;
             default:
-               this.currentToast.push(Message.info(title, {
-                  ...options,
-                  title: "",
-                  position: "top-center",
-                  hasMask: mask,
-                  type: toastType,
-                  icon: toastType,
-               }));
+               this.currentToast.push(
+                  Message.info(title, {
+                     ...options,
+                     title: "",
+                     position: "top-center",
+                     hasMask: mask,
+                     type: toastType,
+                     icon: toastType,
+                     zIndex: options.zIndex || 9999,
+                  })
+               );
                break;
          }
       }
