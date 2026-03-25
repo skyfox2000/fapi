@@ -97,7 +97,7 @@ export const httpGet = <T>(
          url,
          method: "GET",
          timeout: urlInfo.timeout,
-         loadingText: urlInfo.loadingText ?? "数据加载中……",
+         loadingText: urlInfo.loadingText ?? "Loading Data...",
       },
       urlInfo,
       request
@@ -123,7 +123,7 @@ export const httpPut = <T>(
          method: "PUT",
          data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
-         loadingText: "正在存储数据……",
+         loadingText: "Saving Data...",
       },
       urlInfo,
       request
@@ -149,7 +149,7 @@ export const httpDelete = <T>(
          method: "DELETE",
          data: data,
          timeout: urlInfo.timeout,
-         loadingText: "正在删除数据……",
+         loadingText: "Deleting Data...",
       },
       urlInfo,
       request
@@ -175,7 +175,7 @@ export const httpPost = <T>(
          method: "POST",
          data: data ?? urlInfo.params,
          timeout: urlInfo.timeout,
-         loadingText: urlInfo.loadingText ?? "数据加载中……",
+         loadingText: urlInfo.loadingText ?? "Loading Data...",
       },
       urlInfo,
       request

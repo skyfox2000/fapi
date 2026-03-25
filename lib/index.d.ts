@@ -311,7 +311,7 @@ declare type RequestOptions = {
     /**
      * HttpDNS 服务商 Id。 HttpDNS 用法详见 [移动解析HttpDNS](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/HTTPDNS.html)
      */
-    httpDNSServiceId?: boolean;
+    httpDNSServiceId?: string;
     /**
      * 开启 transfer-encoding chunked
      */
@@ -353,7 +353,7 @@ export declare const setToken: (token: string) => void;
 declare interface ShowToastOptions {
     title?: string;
     closable?: boolean;
-    icon?: "success" | "loading" | "error" | "none" | "warning";
+    icon?: ToastType;
     image?: string;
     duration?: number;
     position?: "top" | "center" | "bottom" | "top-center";
@@ -388,6 +388,8 @@ declare class Toast {
 }
 
 export declare const toast: Toast;
+
+declare type ToastType = "success" | "error" | "warning" | "loading";
 
 export declare const uniDelete: <T>(urlInfo: IUrlInfo, data: ReqParams | any) => Promise<ApiResponse<T> | null>;
 

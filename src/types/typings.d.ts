@@ -128,7 +128,7 @@ export type RequestOptions = {
    /**
     * HttpDNS 服务商 Id。 HttpDNS 用法详见 [移动解析HttpDNS](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/HTTPDNS.html)
     */
-   httpDNSServiceId?: boolean;
+   httpDNSServiceId?: string;
    /**
     * 开启 transfer-encoding chunked
     */

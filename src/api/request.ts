@@ -23,7 +23,7 @@ import toast from "@/utils/toast";
 import { fieldMapping } from "@/utils/data/fieldMap";
 import { getToken } from "@/utils/call/auth";
 import { FrontCache } from "./cache";
-import { globalRequestOption } from "./index";
+import { getGlobalConfig, getGlobalBefore, getGlobalAfter } from "./index";
 import { deepClone } from "@/utils/data/deepClone";
 import { isEmpty } from "@/utils/data/isEmpty";
 
@@ -70,7 +70,7 @@ export const requestBefore = (
       const token = getToken(); // 获取 token
       if (!token) {
          // 如果没有 token，提示错误并返回 false
-         const msg = `错误，接口 ${urlInfo.url} 需要授权才能访问！`;
+         const msg = `Error, interface ${urlInfo.url} requires authorization to access!`;
          console.error(msg);
          toast.error({ title: msg });
          return false;
@@ -89,6 +89,16 @@ export const requestBefore = (
       }
    }
 
+   // 执行全局 before 拦截器（先执行全局）
+   const globalBefore = getGlobalBefore();
+   if (globalBefore) {
+      const res = globalBefore(options);
+      if (res !== undefined) {
+         return res;
+      }
+   }
+
+   // 执行单个请求的 before 拦截器
    if (urlInfo.before) {
       const res = urlInfo.before.call(urlInfo, options);
       if (res !== undefined) {
@@ -108,6 +118,11 @@ export const requestSuccess = <T>(
       // 原始模式：直接返回原始数据，不做任何处理
       if (urlInfo.raw) {
          const resData = res.data;
+         // 先执行全局 after
+         const globalAfter = getGlobalAfter();
+         if (globalAfter) {
+            globalAfter(config, resData);
+         }
          if (urlInfo.after) {
             urlInfo.after!.call(urlInfo, config, resData);
          }
@@ -124,6 +139,11 @@ export const requestSuccess = <T>(
             fieldMapping(urlInfo.fieldMap, data);
          }
 
+         // 先执行全局 after
+         const globalAfter = getGlobalAfter();
+         if (globalAfter) {
+            globalAfter(config, resData);
+         }
          if (urlInfo.after) {
             urlInfo.after!.call(urlInfo, resData, config);
          }
@@ -134,30 +154,37 @@ export const requestSuccess = <T>(
          resultInfo.Error = {
             status: resData.status,
             errno: resData.errno,
-            msg: resData.msg || "请求发生错误",
+            msg: resData.msg || "Request Error",
          };
          resultInfo.Result = resData;
+         // 执行全局 after 拦截器（错误时也执行）
+         const globalAfter = getGlobalAfter();
+         if (globalAfter) {
+            globalAfter(config, resData);
+         }
+         if (urlInfo.after) {
+            urlInfo.after!.call(urlInfo, resData, config);
+         }
       }
    } else {
       // 其他错误 -> 根据后端错误信息轻提示
       let message;
-      // http状态码
       const statusCode = res.statusCode;
       switch (statusCode) {
          case 401:
-            message = "未授权或授权过期";
+            message = "Unauthorized or Token Expired";
             break;
          case 403:
-            message = "无权访问";
+            message = "Access Forbidden";
             break;
          case 404:
-            message = "请求地址错误";
+            message = "Request Address Error";
             break;
          case 500:
-            message = "服务器异常";
+            message = "Server Exception";
             break;
          default:
-            message = "其它请求错误";
+            message = "Other Request Error";
             break;
       }
 
@@ -171,6 +198,14 @@ export const requestSuccess = <T>(
             msg: message,
          };
          resultInfo.Error = err;
+         // 执行全局 after 拦截器（错误时也执行）
+         const globalAfter = getGlobalAfter();
+         if (globalAfter) {
+            globalAfter(config, err);
+         }
+         if (urlInfo.after) {
+            urlInfo.after!.call(urlInfo, config, err);
+         }
          return;
       }
 
@@ -181,6 +216,14 @@ export const requestSuccess = <T>(
          msg: message,
       };
       resultInfo.Error = err;
+      // 执行全局 after 拦截器（错误时也执行）
+      const globalAfter = getGlobalAfter();
+      if (globalAfter) {
+         globalAfter(config, err);
+      }
+      if (urlInfo.after) {
+         urlInfo.after!.call(urlInfo, err, config);
+      }
    }
 };
 
@@ -190,7 +233,7 @@ export const requestFail = <T>(netErr: any, resultInfo: RequestResult<T>) => {
    const err: ApiResponse = {
       status: ResStatus.ERROR,
       errno: 1000,
-      msg: "网络错误：" + netErr.toString(),
+      msg: "Network Error: " + netErr.toString(),
    };
 
    resultInfo.Error = err;
@@ -247,7 +290,7 @@ export const http = <T>(
    ) => Promise<ApiResponse<T> | null>
 ): Promise<ApiResponse<T> | null> => {
    // 默认全局配置
-   const config = deepClone(globalRequestOption);
+   const config = deepClone(getGlobalConfig());
    const beforeRes = requestBefore(options, urlInfo, config);
    /// 请求前判断参数是否合规，或者自定义处理headers，如果返回false，则取消执行调用API接口
    if (beforeRes === false) return Promise.resolve(null);

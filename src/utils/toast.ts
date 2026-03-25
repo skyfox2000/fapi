@@ -1,6 +1,6 @@
-import Message, { MessageIntance } from "vue-m-message";
+import Message, { MessageIntance } from "vue-m-message"
 
-type ToastType = "success" | "error" | "warning" | "none" | "loading";
+type ToastType = "success" | "error" | "warning" | "loading";
 
 interface ShowToastOptions {
    /**
@@ -20,7 +20,7 @@ interface ShowToastOptions {
     * - none: 不显示图标
     * - warning: 显示警告图标，此时 title 文本无长度显示，仅支付宝小程序、字节小程序
     */
-   icon?: "success" | "loading" | "error" | "none" | "warning";
+   icon?: ToastType;
 
    /**
     * 自定义图标的本地路径，image 的优先级高于 icon
@@ -72,7 +72,7 @@ class Toast {
    private defaultOptions: ShowToastOptions = {
       closable: false,
       duration: 3000,
-      icon: "none",
+      icon: "info" as ToastType,
       mask: false,
       position: "center",
       zIndex: 9999,
@@ -95,23 +95,23 @@ class Toast {
    }
 
    public success(options: ShowToastOptions | string): void {
-      this.showToast("success", options, "操作成功");
+      this.showToast("success", options, "Operation Successful");
    }
 
    public error(options: ShowToastOptions | string): void {
-      this.showToast("error", options, "操作失败", 5000);
+      this.showToast("error", options, "Operation Failed", 5000);
    }
 
    public warning(options: ShowToastOptions | string): void {
-      this.showToast("warning", options, "警告警告", 5000);
+      this.showToast("warning", options, "Warning", 5000);
    }
 
    public info(options: ShowToastOptions | string): void {
-      this.showToast("none", options, "提示信息");
+      this.showToast("info" as ToastType, options, "Information");
    }
 
    public loading(options: ShowToastOptions | string): void {
-      this.showToast("loading", options, "数据加载中", -1);
+      this.showToast("loading", options, "Loading Data", -1);
    }
 
    public hide(delay?: number): void {
@@ -153,64 +153,55 @@ class Toast {
             complete: options.complete,
          });
       } else {
-         // 使用 vue3-toastify 的方法
-         let toastType = "info"; // 默认为 info 类型
+         // 使用 vue-m-message 的方法
          this.hide();
          switch (icon) {
             case "success":
                this.currentToast.push(
-                  Message.success(title, {
+                  Message.success(title!, {
                      ...options,
-                     title: "",
+                     title: undefined,
                      position: "top-center",
                      hasMask: mask,
-                     type: toastType,
-                     icon: toastType,
-                     closeOnClick: true,
-                     pauseOnFocusLoss: true,
-                     pauseOnHover: true,
                      zIndex: options.zIndex || 9999,
-                  })
+                     closable: false,
+                  } as any)
                );
                break;
             case "error":
                this.currentToast.push(
-                  Message.error(title, {
+                  Message.error(title!, {
                      ...options,
-                     title: "",
+                     title: undefined,
                      position: "top-center",
                      hasMask: mask,
-                     type: toastType,
-                     icon: toastType,
                      zIndex: options.zIndex || 9999,
-                  })
+                     closable: false,
+                  } as any)
                );
                break;
             case "loading":
                this.currentToast.push(
-                  Message.loading(title, {
+                  Message.loading(title!, {
                      ...options,
-                     title: "",
+                     title: undefined,
                      position: "top-center",
                      hasMask: mask,
-                     type: toastType,
-                     icon: toastType,
-                     duration: -1, // 不自动关闭
                      zIndex: options.zIndex || 9999,
-                  })
+                     closable: false,
+                  } as any)
                );
                break;
             default:
                this.currentToast.push(
-                  Message.info(title, {
+                  Message.info(title!, {
                      ...options,
-                     title: "",
+                     title: undefined,
                      position: "top-center",
                      hasMask: mask,
-                     type: toastType,
-                     icon: toastType,
                      zIndex: options.zIndex || 9999,
-                  })
+                     closable: false,
+                  } as any)
                );
                break;
          }

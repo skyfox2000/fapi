@@ -20,7 +20,7 @@ export const hostUrl = (urlInfo: IUrlInfo): string | false => {
 
    // 如果配置不存在，提示错误并返回 false
    if (!apiHostConfig) {
-      toast.error("未查询到接口域名：" + api);
+      toast.error("API domain not found: " + api);
       return false;
    }
 
