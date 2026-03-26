@@ -50,18 +50,55 @@ const PENDING_MAP_EXPIRE = 2000;
  * @param urlInfo 前端请求配置
  * @param config 默认全局配置
  */
+/**
+ * 深度合并对象
+ * @param target 目标对象
+ * @param sources 源对象数组，后面的优先级更高
+ */
+const deepMerge = (target: any, ...sources: any[]): any => {
+   if (!sources.length) return target;
+   const source = sources.shift();
+   if (source === undefined) return target;
+
+   for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+         if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
+            if (!target[key]) target[key] = {};
+            deepMerge(target[key], source[key]);
+         } else {
+            target[key] = source[key];
+         }
+      }
+   }
+   return deepMerge(target, ...sources);
+};
+
 export const requestBefore = (
    options: RequestOptions,
    urlInfo: IUrlInfo,
    config: Record<string, any>
 ): boolean | void => {
-   Object.assign(options, config, options);
+   // 深度合并配置：全局配置(config) < 请求参数(options) < urlInfo配置
+   // 优先级：urlInfo > options > config
+   const mergedOptions = deepMerge({}, config, options);
+   Object.assign(options, mergedOptions);
 
+   // 处理 header：深度合并全局header、options.header、urlInfo.header
+   const globalHeader = config.header || {};
+   const optionsHeader = options.header || {};
+   
    if (typeof urlInfo.header === "object") {
-      options.header = urlInfo.header;
+      // urlInfo.header 是对象，深度合并
+      options.header = deepMerge({}, globalHeader, optionsHeader, urlInfo.header);
    } else if (typeof urlInfo.header === "function") {
-      options.header = urlInfo.header(config.header);
+      // urlInfo.header 是函数，先深度合并基础header，再传入函数
+      const baseHeader = deepMerge({}, globalHeader, optionsHeader);
+      options.header = urlInfo.header(baseHeader);
+   } else {
+      // urlInfo 没有配置 header，使用深度合并后的 header
+      options.header = deepMerge({}, globalHeader, optionsHeader);
    }
+   
    if (!options.header) options.header = {};
    options.header.reqId = createId();
 
@@ -121,10 +158,10 @@ export const requestSuccess = <T>(
          // 先执行全局 after
          const globalAfter = getGlobalAfter();
          if (globalAfter) {
-            globalAfter(config, resData);
+            globalAfter(config, resData, res);
          }
          if (urlInfo.after) {
-            urlInfo.after!.call(urlInfo, config, resData);
+            urlInfo.after!.call(urlInfo, config, resData, res);
          }
          resultInfo.Result = resData as any;
          return;
@@ -142,10 +179,10 @@ export const requestSuccess = <T>(
          // 先执行全局 after
          const globalAfter = getGlobalAfter();
          if (globalAfter) {
-            globalAfter(config, resData);
+            globalAfter(config, resData, res);
          }
          if (urlInfo.after) {
-            urlInfo.after!.call(urlInfo, resData, config);
+            urlInfo.after!.call(urlInfo, resData, config, res);
          }
 
          resultInfo.Result = resData;
@@ -160,10 +197,10 @@ export const requestSuccess = <T>(
          // 执行全局 after 拦截器（错误时也执行）
          const globalAfter = getGlobalAfter();
          if (globalAfter) {
-            globalAfter(config, resData);
+            globalAfter(config, resData, res);
          }
          if (urlInfo.after) {
-            urlInfo.after!.call(urlInfo, resData, config);
+            urlInfo.after!.call(urlInfo, resData, config, res);
          }
       }
    } else {
@@ -201,10 +238,10 @@ export const requestSuccess = <T>(
          // 执行全局 after 拦截器（错误时也执行）
          const globalAfter = getGlobalAfter();
          if (globalAfter) {
-            globalAfter(config, err);
+            globalAfter(config, err, res);
          }
          if (urlInfo.after) {
-            urlInfo.after!.call(urlInfo, config, err);
+            urlInfo.after!.call(urlInfo, config, err, res);
          }
          return;
       }
@@ -219,10 +256,10 @@ export const requestSuccess = <T>(
       // 执行全局 after 拦截器（错误时也执行）
       const globalAfter = getGlobalAfter();
       if (globalAfter) {
-         globalAfter(config, err);
+         globalAfter(config, err, res);
       }
       if (urlInfo.after) {
-         urlInfo.after!.call(urlInfo, err, config);
+         urlInfo.after!.call(urlInfo, err, config, res);
       }
    }
 };

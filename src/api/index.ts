@@ -1,7 +1,6 @@
-import { RequestOptions, IUrlInfo } from "@/types/typings";
+import { RequestOptions, IUrlInfo, AjaxResponse } from "@/types/typings";
 
-const requestConfig: RequestOptions = {
-   url: "",
+const requestConfig: Partial<RequestOptions> = {
    header: { "Content-Type": "application/json" },
 };
 
@@ -9,7 +8,7 @@ const requestConfig: RequestOptions = {
 let globalBefore: ((config: Record<string, any>) => boolean | void) | undefined;
 
 /** 全局 after 拦截器 */
-let globalAfter: ((config: Record<string, any>, result: any) => void) | undefined;
+let globalAfter: ((config: Record<string, any>, result: any, res?: AjaxResponse) => void) | undefined;
 
 /** 添加全局请求、结果拦截器、参数 */
 export const globalRequestOption = (config: RequestOptions & Pick<IUrlInfo, 'before' | 'after'>) => {
@@ -20,7 +19,7 @@ export const globalRequestOption = (config: RequestOptions & Pick<IUrlInfo, 'bef
 };
 
 /** 获取全局配置 */
-export const getGlobalConfig = () => requestConfig;
+export const getGlobalConfig = (): Partial<RequestOptions> => requestConfig;
 
 /** 获取全局 before 拦截器 */
 export const getGlobalBefore = () => globalBefore;

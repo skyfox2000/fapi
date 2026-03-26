@@ -49,6 +49,7 @@ const request = <T>(
                {
                   statusCode: res.status,
                   data: res.data,
+                  header: res.headers as Record<string, string>,
                },
                resultInfo
             );
@@ -66,6 +67,7 @@ const request = <T>(
                      {
                         statusCode: err.response.status,
                         data: err.response?.data as any,
+                        header: err.response.headers as Record<string, string>,
                      },
                      resultInfo
                   );

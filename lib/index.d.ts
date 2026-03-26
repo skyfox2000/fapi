@@ -3,6 +3,7 @@ import { ResponseType as ResponseType_2 } from 'axios';
 declare type AjaxResponse = {
     statusCode: number;
     data: AnyData;
+    header?: Record<string, string>;
 };
 
 /**
@@ -75,9 +76,15 @@ export declare const FrontCache: {
     }): void;
 };
 
+export declare const getGlobalAfter: () => ((config: Record<string, any>, result: any, res?: AjaxResponse) => void) | undefined;
+
+export declare const getGlobalBefore: () => ((config: Record<string, any>) => boolean | void) | undefined;
+
+export declare const getGlobalConfig: () => Partial<RequestOptions>;
+
 export declare const getToken: () => string;
 
-export declare const globalRequestOption: (config: RequestOptions) => void;
+export declare const globalRequestOption: (config: RequestOptions & Pick<IUrlInfo, "before" | "after">) => void;
 
 export declare const hostUrl: (urlInfo: IUrlInfo) => string | false;
 
@@ -212,8 +219,9 @@ export declare type IUrlInfo = {
      * 调用后置处理
      * @param config 请求参数
      * @param result 结果数据 - 原始模式时为任意类型，标准模式时为 ApiResponse
+     * @param res 原始响应对象，包含 statusCode, data, header
      */
-    after?: (config: Record<string, any>, result: ApiResponse | any) => void;
+    after?: (config: Record<string, any>, result: ApiResponse | any, res?: AjaxResponse) => void;
     /**
      * 是否正在加载中
      */

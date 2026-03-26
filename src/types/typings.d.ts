@@ -60,6 +60,7 @@ export enum ResStatus {
 export type AjaxResponse = {
    statusCode: number;
    data: AnyData;
+   header?: Record<string, string>;
 };
 
 export type RequestOptions = {
@@ -300,8 +301,9 @@ export type IUrlInfo = {
     * 调用后置处理
     * @param config 请求参数
     * @param result 结果数据 - 原始模式时为任意类型，标准模式时为 ApiResponse
+    * @param res 原始响应对象，包含 statusCode, data, header
     */
-   after?: (config: Record<string, any>, result: ApiResponse | any) => void;
+   after?: (config: Record<string, any>, result: ApiResponse | any, res?: AjaxResponse) => void;
    /**
     * 是否正在加载中
     */
