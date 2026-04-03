@@ -134,10 +134,11 @@ export const disableCryptoCommunication = (): void => {
 
 /**
  * 检查当前是否启用了加密通信
+ * 只要有公钥就启用加密（通过 initCryptoCommunication 或响应头 X-Public-Key 设置）
  * @returns boolean
  */
 export const isCryptoEnabled = (): boolean => {
-  return globalCryptoConfig.enabled && hasPublicKey();
+  return hasPublicKey();
 };
 
 /**

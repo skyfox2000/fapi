@@ -54,10 +54,10 @@ const importPublicKey = async (pem: string): Promise<CryptoKey> => {
     .replace(/\s/g, "");
   
   const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
-  
+
   return await crypto.subtle.importKey(
     "spki",
-    binaryDer.buffer,
+    uint8ArrayToArrayBuffer(binaryDer),
     {
       name: "RSA-OAEP",
       hash: "SHA-256",
@@ -121,6 +121,15 @@ const base64ToArrayBuffer = (base64: string): Uint8Array => {
 };
 
 /**
+ * 将 Uint8Array 转换为 ArrayBuffer（创建副本以确保数据正确）
+ * @param uint8Array Uint8Array
+ * @returns ArrayBuffer
+ */
+const uint8ArrayToArrayBuffer = (uint8Array: Uint8Array): ArrayBuffer => {
+  return uint8Array.slice().buffer;
+};
+
+/**
  * 使用 RSA 公钥加密 AES 密钥
  * @param aesKey 原始 AES 密钥字节
  * @param publicKey PEM 格式的 RSA 公钥
@@ -136,7 +145,7 @@ const encryptAesKeyWithRSA = async (
       name: "RSA-OAEP",
     },
     cryptoKey,
-    aesKey.buffer as ArrayBuffer
+    uint8ArrayToArrayBuffer(aesKey)
   );
   return arrayBufferToBase64(encrypted);
 };
@@ -166,10 +175,10 @@ const encryptWithAES = async (
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv: nonce.buffer as ArrayBuffer,
+      iv: uint8ArrayToArrayBuffer(nonce),
     },
     key,
-    plaintext
+    uint8ArrayToArrayBuffer(plaintext)
   );
 
   return {
@@ -196,10 +205,10 @@ const decryptWithAES = async (
   const decrypted = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv: nonceBuffer.buffer as ArrayBuffer,
+      iv: uint8ArrayToArrayBuffer(nonceBuffer),
     },
     key,
-    ciphertextBuffer.buffer as ArrayBuffer
+    uint8ArrayToArrayBuffer(ciphertextBuffer)
   );
 
   const decoder = new TextDecoder();
