@@ -42,8 +42,8 @@ const request = <T>(
                headers: header,
             },
          })
-         .then((res: AxiosResponse) => {
-            requestSuccess(
+         .then(async (res: AxiosResponse) => {
+            await requestSuccess(
                options,
                urlInfo,
                {
@@ -54,14 +54,14 @@ const request = <T>(
                resultInfo
             );
          })
-         .catch((err: AxiosError) => {
+         .catch(async (err: AxiosError) => {
             if (err.response) {
                if (
                   err.response.status &&
                   err.response.status > 200 &&
                   err.response.status < 600
                ) {
-                  requestSuccess(
+                  await requestSuccess(
                      options,
                      urlInfo,
                      {

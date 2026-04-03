@@ -8,6 +8,11 @@ import {
 } from "@/types/typings.d";
 import { generateKey } from "@/utils/data/keyGenerate";
 import { init } from "@paralleldrive/cuid2";
+import {
+  processEncryptedRequest,
+  processEncryptedResponse,
+  cachePublicKeyFromHeader,
+} from "./crypto.middleware";
 const createId = init({
    // A custom random function with the same API as Math.random.
    // You can use this to pass a cryptographically secure random function.
@@ -142,14 +147,36 @@ export const requestBefore = (
          return res;
       }
    }
+
+   // 处理加密请求（异步操作，但需要在请求前完成）
+   // 注意：这里返回一个特殊的标记，让 http 函数知道需要等待加密处理
 };
 
-export const requestSuccess = <T>(
+/**
+ * 异步请求前置处理（用于加密等异步操作）
+ * @param options 请求实际参数配置
+ * @param urlInfo 前端请求配置
+ */
+export const requestBeforeAsync = async (
+   options: RequestOptions,
+   urlInfo: IUrlInfo
+): Promise<void> => {
+   // 处理加密请求
+   await processEncryptedRequest(options, urlInfo);
+};
+
+export const requestSuccess = async <T>(
    config: RequestOptions,
    urlInfo: IUrlInfo,
    res: AjaxResponse,
    resultInfo: RequestResult<T>
 ) => {
+   // 缓存响应头中的公钥
+   cachePublicKeyFromHeader(res.header);
+
+   // 处理加密响应
+   res.data = await processEncryptedResponse(res);
+
    // 状态码 2xx
    if (res.statusCode >= 200 && res.statusCode < 400) {
       // 原始模式：直接返回原始数据，不做任何处理
@@ -318,7 +345,7 @@ export const requestComplete = <T>(
  * @param request 请求接口
  * @returns Promise 数据类型
  */
-export const http = <T>(
+export const http = async <T>(
    options: RequestOptions,
    urlInfo: IUrlInfo,
    request: <T>(
@@ -331,7 +358,10 @@ export const http = <T>(
    const beforeRes = requestBefore(options, urlInfo, config);
    /// 请求前判断参数是否合规，或者自定义处理headers，如果返回false，则取消执行调用API接口
    if (beforeRes === false) return Promise.resolve(null);
-   
+
+   // 异步前置处理（加密等）
+   await requestBeforeAsync(options, urlInfo);
+
    if (options.loadingText) {
       toast.loading({
          title: options.loadingText.toString(),

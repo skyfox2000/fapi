@@ -36,8 +36,8 @@ const request = <T>(
    return new Promise((resolve) => {
       uni.request({
          ...options,
-         success: (res: AjaxResponse) => {
-            requestSuccess(options, urlInfo, res, resultInfo);
+         success: async (res: AjaxResponse) => {
+            await requestSuccess(options, urlInfo, res, resultInfo);
          },
          fail: (err: any) => {
             requestFail(err, resultInfo);
