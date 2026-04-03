@@ -66,9 +66,22 @@ export const processEncryptedResponse = async (
   // 如果有响应 nonce，说明响应是加密的
   if (responseNonce && res.data) {
     try {
-      // 检查数据是否为加密格式
-      if (isEncryptedResponse(res.data)) {
-        const decrypted = await decryptResponse(res.data, responseNonce);
+      let encryptedData: string | null = null;
+
+      // 检查数据格式：支持直接字符串或 { encrypted: "base64" } 格式
+      if (typeof res.data === "string" && isEncryptedResponse(res.data)) {
+        // 直接返回加密字符串
+        encryptedData = res.data;
+      } else if (typeof res.data === "object" && res.data !== null) {
+        // 检查是否为 { encrypted: "base64" } 格式
+        if ("encrypted" in res.data && typeof res.data.encrypted === "string") {
+          encryptedData = res.data.encrypted;
+          console.log("[Crypto] 检测到 JSON 格式加密响应:", { encrypted: res.data.encrypted.slice(0, 50) + "..." });
+        }
+      }
+
+      if (encryptedData && isEncryptedResponse(encryptedData)) {
+        const decrypted = await decryptResponse(encryptedData, responseNonce);
         if (decrypted !== null) {
           return decrypted;
         }
