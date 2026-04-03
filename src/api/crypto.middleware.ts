@@ -84,6 +84,7 @@ export const processEncryptedResponse = async (
 
 /**
  * 检查并缓存响应头中的公钥
+ * 注意：公钥只允许设置一次，初始化后不可更改
  * @param headers 响应头
  */
 export const cachePublicKeyFromHeader = (
@@ -92,6 +93,9 @@ export const cachePublicKeyFromHeader = (
   if (!headers) return;
   const publicKey = headers["x-public-key"] || headers["X-Public-Key"];
   if (publicKey) {
-    setPublicKey(publicKey);
+    const success = setPublicKey(publicKey);
+    if (!success) {
+      console.warn("[Crypto] 公钥已存在，忽略响应头中的公钥（加密方式初始化后不可更改）");
+    }
   }
 };

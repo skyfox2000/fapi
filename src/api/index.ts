@@ -27,27 +27,7 @@ export const getGlobalBefore = () => globalBefore;
 /** 获取全局 after 拦截器 */
 export const getGlobalAfter = () => globalAfter;
 
-// 导出加密通信相关功能
+// 导出加密通信相关功能（仅initCrypto）
 export {
-   initCryptoCommunication,
-   updateCryptoConfig,
-   getCryptoConfig,
-   disableCryptoCommunication,
-   isCryptoEnabled,
-   shouldEncryptUrl,
-   addEncryptedApis,
-   addExcludedApis,
-   addEncryptedHostKeys,
-   addExcludedHostKeys,
-   type CryptoConfig,
+   initCrypto,
 } from "./crypto.config";
-
-export {
-   setPublicKey,
-   getPublicKey,
-   clearPublicKey,
-   hasPublicKey,
-   encryptRequest,
-   decryptResponse,
-   isEncryptedResponse,
-} from "@/utils/crypto";

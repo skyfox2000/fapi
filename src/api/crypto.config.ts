@@ -3,7 +3,7 @@
  * 用于控制哪些接口需要加密，哪些不需要
  */
 
-import { setPublicKey, clearPublicKey, hasPublicKey } from "@/utils/crypto";
+import { hasPublicKey } from "@/utils/crypto";
 
 /**
  * 加密配置选项
@@ -14,6 +14,13 @@ export interface CryptoConfig {
    * 默认: false
    */
   enabled: boolean;
+
+  /**
+   * 是否启用调试模式
+   * 启用后会输出加密/解密过程中的关键信息（如密钥、参数等）
+   * 默认: false
+   */
+  debug?: boolean;
 
   /**
    * 需要加密的 API 列表
@@ -54,49 +61,44 @@ let globalCryptoConfig: CryptoConfig = {
 };
 
 /**
- * 初始化加密通信配置
- * @param publicKey RSA 公钥（PEM 格式）
+ * 初始化加密配置
  * @param config 加密配置选项
  *
  * @example
  * // 启用所有 API_HOST 接口的加密
- * initCryptoCommunication(publicKey, { enabled: true });
+ * initCrypto({ enabled: true });
  *
  * @example
  * // 只加密特定接口
- * initCryptoCommunication(publicKey, {
+ * initCrypto({
  *   enabled: true,
  *   includeApis: ['user/login', 'user/register']
  * });
  *
  * @example
  * // 加密所有接口，但排除特定接口
- * initCryptoCommunication(publicKey, {
+ * initCrypto({
  *   enabled: true,
  *   excludeApis: ['public/info', /health/]
  * });
  *
  * @example
  * // 只加密特定 API_HOST 的接口
- * initCryptoCommunication(publicKey, {
+ * initCrypto({
  *   enabled: true,
  *   includeHostKeys: ['SITEHOST_API', 'SECURE_API']
  * });
  *
  * @example
  * // 加密所有接口，但排除特定 API_HOST
- * initCryptoCommunication(publicKey, {
+ * initCrypto({
  *   enabled: true,
  *   excludeHostKeys: ['PUBLIC_API', 'STATIC_API']
  * });
  */
-export const initCryptoCommunication = (
-  publicKey: string,
+export const initCrypto = (
   config?: Partial<CryptoConfig>
 ): void => {
-  // 设置公钥
-  setPublicKey(publicKey);
-
   // 合并配置
   globalCryptoConfig = {
     ...globalCryptoConfig,
@@ -105,36 +107,19 @@ export const initCryptoCommunication = (
   };
 };
 
-/**
- * 更新加密配置
- * @param config 部分配置选项
- */
-export const updateCryptoConfig = (config: Partial<CryptoConfig>): void => {
-  globalCryptoConfig = {
-    ...globalCryptoConfig,
-    ...config,
-  };
-};
+
 
 /**
- * 获取当前加密配置
- * @returns 当前配置
+ * 检查是否启用了调试模式
+ * @returns boolean
  */
-export const getCryptoConfig = (): CryptoConfig => {
-  return { ...globalCryptoConfig };
-};
-
-/**
- * 关闭加密通信
- */
-export const disableCryptoCommunication = (): void => {
-  globalCryptoConfig.enabled = false;
-  clearPublicKey();
+export const isDebugEnabled = (): boolean => {
+  return globalCryptoConfig.debug === true;
 };
 
 /**
  * 检查当前是否启用了加密通信
- * 只要有公钥就启用加密（通过 initCryptoCommunication 或响应头 X-Public-Key 设置）
+ * 只要有公钥就启用加密（通过 initCrypto 或响应头 X-Public-Key 设置）
  * @returns boolean
  */
 export const isCryptoEnabled = (): boolean => {
@@ -207,48 +192,4 @@ export const shouldEncryptUrl = (url: string, apiKey?: string): boolean => {
 
   // 默认不加密
   return false;
-};
-
-/**
- * 添加需要加密的 API
- * @param apis API 列表（字符串或正则）
- */
-export const addEncryptedApis = (...apis: (string | RegExp)[]): void => {
-  if (!globalCryptoConfig.includeApis) {
-    globalCryptoConfig.includeApis = [];
-  }
-  globalCryptoConfig.includeApis.push(...apis);
-};
-
-/**
- * 添加不需要加密的 API
- * @param apis API 列表（字符串或正则）
- */
-export const addExcludedApis = (...apis: (string | RegExp)[]): void => {
-  if (!globalCryptoConfig.excludeApis) {
-    globalCryptoConfig.excludeApis = [];
-  }
-  globalCryptoConfig.excludeApis.push(...apis);
-};
-
-/**
- * 添加需要加密的 API_HOST key
- * @param hostKeys API_HOST key 列表
- */
-export const addEncryptedHostKeys = (...hostKeys: string[]): void => {
-  if (!globalCryptoConfig.includeHostKeys) {
-    globalCryptoConfig.includeHostKeys = [];
-  }
-  globalCryptoConfig.includeHostKeys.push(...hostKeys);
-};
-
-/**
- * 添加不需要加密的 API_HOST key
- * @param hostKeys API_HOST key 列表
- */
-export const addExcludedHostKeys = (...hostKeys: string[]): void => {
-  if (!globalCryptoConfig.excludeHostKeys) {
-    globalCryptoConfig.excludeHostKeys = [];
-  }
-  globalCryptoConfig.excludeHostKeys.push(...hostKeys);
 };

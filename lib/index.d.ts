@@ -42,6 +42,15 @@ export declare type ApiResponse<T = AnyData> = {
     data?: T | FindResult;
 };
 
+declare interface CryptoConfig {
+    enabled: boolean;
+    debug?: boolean;
+    includeApis?: (string | RegExp)[];
+    excludeApis?: (string | RegExp)[];
+    includeHostKeys?: string[];
+    excludeHostKeys?: string[];
+}
+
 export declare const deepClone: <T>(obj: T) => T;
 
 export declare const fieldMapping: (fieldMap: Record<string, string>, data: any) => any;
@@ -99,6 +108,8 @@ export declare const httpPut: <T>(urlInfo: IUrlInfo, data?: ReqParams | any) => 
 export declare const ICON_HOST: {
     [key: string]: any;
 };
+
+export declare const initCrypto: (config?: Partial<CryptoConfig>) => void;
 
 export declare const isJSON: (value: any) => boolean;
 

@@ -13,7 +13,14 @@ export type {
 export { ResStatus } from "@/types/typings.d"
 
 // 从api导出
-export { globalRequestOption, getGlobalConfig, getGlobalBefore, getGlobalAfter } from "@/api/index"
+export {
+  globalRequestOption,
+  getGlobalConfig,
+  getGlobalBefore,
+  getGlobalAfter,
+  // 加密相关（仅initCrypto）
+  initCrypto,
+} from "@/api/index"
 
 // 从api/cache导出
 export { FrontCache } from "@/api/cache/index"

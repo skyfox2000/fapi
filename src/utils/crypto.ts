@@ -3,6 +3,8 @@
  * 支持 RSA 公钥加密和 AES-GCM 对称加密
  */
 
+import { isDebugEnabled } from "@/api/crypto.config";
+
 // 全局缓存的 RSA 公钥（内存存储）
 let cachedPublicKey: string | null = null;
 
@@ -10,11 +12,38 @@ let cachedPublicKey: string | null = null;
 let tempAesKey: CryptoKey | null = null;
 
 /**
- * 缓存 RSA 公钥
- * @param publicKey PEM 格式的 RSA 公钥
+ * 调试日志输出
+ * @param label 标签
+ * @param data 数据
  */
-export const setPublicKey = (publicKey: string): void => {
+const debugLog = (label: string, data?: any): void => {
+  if (!isDebugEnabled()) return;
+  
+  if (data !== undefined) {
+    if (data instanceof Uint8Array) {
+      console.log(`[Crypto Debug] ${label}:`, arrayBufferToBase64(data));
+    } else if (typeof data === 'object') {
+      console.log(`[Crypto Debug] ${label}:`, JSON.stringify(data, null, 2));
+    } else {
+      console.log(`[Crypto Debug] ${label}:`, data);
+    }
+  } else {
+    console.log(`[Crypto Debug] ${label}`);
+  }
+};
+
+/**
+ * 缓存 RSA 公钥（只允许设置一次，防止后期更改）
+ * @param publicKey PEM 格式的 RSA 公钥
+ * @returns 是否设置成功
+ */
+export const setPublicKey = (publicKey: string): boolean => {
+  // 如果已有公钥，不再更改（加密方式初始化后不可更改）
+  if (cachedPublicKey !== null) {
+    return false;
+  }
   cachedPublicKey = publicKey;
+  return true;
 };
 
 /**
@@ -227,21 +256,31 @@ export const encryptRequest = async (
   if (!cachedPublicKey) {
     return null;
   }
-  
+
   try {
+    debugLog("========== 加密请求开始 ==========");
+    debugLog("原始数据", data);
+    debugLog("RSA 公钥", cachedPublicKey);
+
     // 1. 生成临时的 AES-256 密钥
     const aesKey = await generateAesKey();
     tempAesKey = aesKey; // 保存临时密钥用于解密响应
-    
+
     // 2. 导出 AES 密钥
     const aesKeyRaw = await exportAesKey(aesKey);
-    
+    debugLog("AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
+    debugLog("AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
+
     // 3. 用 RSA 公钥加密 AES 密钥
     const encryptedKey = await encryptAesKeyWithRSA(aesKeyRaw, cachedPublicKey);
-    
+    debugLog("RSA 加密后的 AES 密钥 (X-Encrypted-Key)", encryptedKey);
+
     // 4. 用 AES 密钥加密请求数据
     const { ciphertext, nonce } = await encryptWithAES(data, aesKey);
-    
+    debugLog("AES 加密后的数据 (encryptedData)", ciphertext);
+    debugLog("Nonce (X-Nonce)", nonce);
+    debugLog("========== 加密请求结束 ==========");
+
     return {
       encryptedData: ciphertext,
       encryptedKey,
@@ -265,16 +304,30 @@ export const decryptResponse = async (
   nonce: string
 ): Promise<any | null> => {
   if (!tempAesKey) {
+    debugLog("解密失败: 没有可用的 AES 密钥");
     return null;
   }
-  
+
   try {
+    debugLog("========== 解密响应开始 ==========");
+    debugLog("加密数据 (ciphertext)", ciphertext);
+    debugLog("Nonce (X-Response-Nonce)", nonce);
+
+    // 导出当前 AES 密钥用于调试
+    const aesKeyRaw = await exportAesKey(tempAesKey);
+    debugLog("解密使用的 AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
+    debugLog("解密使用的 AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
+
     const decrypted = await decryptWithAES(ciphertext, nonce, tempAesKey);
+    debugLog("解密后的数据", decrypted);
+    debugLog("========== 解密响应结束 ==========");
+
     // 解密完成后清除临时密钥
     tempAesKey = null;
     return decrypted;
   } catch (error) {
     console.error("解密响应数据失败:", error);
+    debugLog("解密错误", error);
     tempAesKey = null;
     return null;
   }
