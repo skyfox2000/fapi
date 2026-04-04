@@ -6,7 +6,9 @@ export type {
   FindResult,
   ApiResponse,
   ReqParams,
-  IUrlInfo
+  IUrlInfo,
+  RequestOptions,
+  AjaxResponse
 } from "@/types/typings.d"
 
 // 从types/typings.d导出枚举
@@ -20,7 +22,13 @@ export {
   getGlobalAfter,
   // 加密相关（仅initCrypto）
   initCrypto,
+  // 代理相关
+  setRequestProxy,
+  type RequestProxyFn,
 } from "@/api/index"
+
+// 从api/request导出
+export { coreRequest } from "@/api/request"
 
 // 从api/cache导出
 export { FrontCache } from "@/api/cache/index"
@@ -49,9 +57,10 @@ export {
 } from "@/api/axios.request"
 
 // 从utils/call/auth导出
-export { getToken, setToken } from "@/utils/call/auth"
+export { getToken, setToken, setTokenCallback } from "@/utils/call/auth"
 
-// 从utils/data导出
+// 从utils/log导出
+export { initLog, type LogModule } from "@/utils/log"
 export { deepClone } from "@/utils/data/deepClone"
 export { fieldMapping, parseFieldTemplate } from "@/utils/data/fieldMap"
 export { isJSON } from "@/utils/data/isJSON"

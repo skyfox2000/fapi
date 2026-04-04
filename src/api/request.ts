@@ -13,6 +13,7 @@ import {
   processEncryptedResponse,
   cachePublicKeyFromHeader,
 } from "./crypto.middleware";
+import axios, { AxiosError } from "axios";
 const createId = init({
    // A custom random function with the same API as Math.random.
    // You can use this to pass a cryptographically secure random function.
@@ -28,9 +29,10 @@ import toast from "@/utils/toast";
 import { fieldMapping } from "@/utils/data/fieldMap";
 import { getToken } from "@/utils/call/auth";
 import { FrontCache } from "./cache";
-import { getGlobalConfig, getGlobalBefore, getGlobalAfter } from "./index";
+import { getGlobalConfig, getGlobalBefore, getGlobalAfter, getRequestProxy } from "./index";
 import { deepClone } from "@/utils/data/deepClone";
 import { isEmpty } from "@/utils/data/isEmpty";
+import { log, logError } from "@/utils/log";
 
 export type RequestResult<T> = {
    Result: ApiResponse<T> | null;
@@ -107,27 +109,13 @@ export const requestBefore = (
    if (!options.header) options.header = {};
    options.header.reqId = createId();
 
-   if (urlInfo.authorize) {
-      // 需要授权
-      const token = getToken(); // 获取 token
-      if (!token) {
-         // 如果没有 token，提示错误并返回 false
-         const msg = `Error, interface ${urlInfo.url} requires authorization to access!`;
-         console.error(msg);
-         toast.error({ title: msg });
+   // token验证统一在 coreRequest 的 injectToken 中处理
+   // urlInfo.authorize 函数在这里处理（子应用端）
+   // 因为函数无法跨微前端边界传递
+   if (urlInfo.authorize && typeof urlInfo.authorize === "function") {
+      const result = urlInfo.authorize(options, urlInfo, "");
+      if (result === false) {
          return false;
-      }
-
-      if (typeof urlInfo.authorize === "boolean") {
-         // 如果是 boolean 类型且为 true，设置授权头
-         options.header.authorization = "Bearer " + token;
-      } else if (typeof urlInfo.authorize === "function") {
-         // 如果是 function 类型，调用函数并传入 options, urlInfo 和 token
-         const result = urlInfo.authorize(options, urlInfo, token);
-         if (result === false) {
-            // 如果函数返回 false，直接返回 false
-            return false;
-         }
       }
    }
 
@@ -165,18 +153,111 @@ export const requestBeforeAsync = async (
    await processEncryptedRequest(options, urlInfo);
 };
 
+/**
+ * 注入token - 内部方法
+ * 只负责验证token存在和注入，不处理 authorize 函数
+ * authorize 函数在子应用端的 requestBefore 中处理
+ * @param options 请求配置
+ * @param urlInfo URL配置
+ * @returns 是否成功注入
+ */
+const injectToken = (
+   options: RequestOptions,
+   urlInfo: IUrlInfo
+): boolean => {
+   if (urlInfo.authorize) {
+      const token = getToken();
+      if (!token) {
+         const msg = `Error, interface ${urlInfo.url} requires authorization to access!`;
+         console.error(msg);
+         toast.error({ title: msg });
+         return false;
+      }
+      // 注入 token（不处理 authorize 函数，已在子应用端处理）
+      if (!options.header?.authorization) {
+         if (!options.header) options.header = {};
+         options.header.authorization = "Bearer " + token;
+      }
+   }
+   return true;
+};
+
+/**
+ * 核心请求方法 - 负责注入token、加密、发送、解密
+ * 供代理和本地请求共用，调用现有方法
+ * @param options 请求配置
+ * @param urlInfo URL配置
+ * @returns 原始响应 AjaxResponse
+ */
+export const coreRequest = async (
+   options: RequestOptions,
+   urlInfo: IUrlInfo
+): Promise<AjaxResponse | null> => {
+   const hasProxy = !!getRequestProxy();
+   log('request', '开始请求', { url: options.url, method: options.method, hasProxy });
+   
+   try {
+      // 1. 注入token（调用现有方法）
+      if (!injectToken(options, urlInfo)) {
+         logError('request', 'Token注入失败', { url: options.url });
+         return null;
+      }
+
+      // 2. 加密请求（调用现有方法）
+      await processEncryptedRequest(options, urlInfo);
+
+      // 3. 发送 HTTP 请求
+      log('request', '发送HTTP请求');
+      const { header, ...rest } = options;
+      const response = await axios.request({
+         ...rest,
+         headers: header,
+      });
+
+      // 4. 构造 AjaxResponse
+      const ajaxResponse: AjaxResponse = {
+         statusCode: response.status,
+         data: response.data,
+         header: response.headers as Record<string, string>,
+      };
+      log('request', 'HTTP响应完成', { 
+         statusCode: ajaxResponse.statusCode,
+         headerKeys: ajaxResponse.header ? Object.keys(ajaxResponse.header) : [],
+         header: ajaxResponse.header
+      });
+
+      // 5. 缓存公钥（调用现有方法）
+      cachePublicKeyFromHeader(ajaxResponse.header);
+
+      // 6. 解密响应（调用现有方法）
+      ajaxResponse.data = await processEncryptedResponse(ajaxResponse);
+
+      log('request', '请求完成', { statusCode: ajaxResponse.statusCode });
+      return ajaxResponse;
+   } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response) {
+         const ajaxResponse: AjaxResponse = {
+            statusCode: axiosError.response.status,
+            data: axiosError.response.data,
+            header: axiosError.response.headers as Record<string, string>,
+         };
+         cachePublicKeyFromHeader(ajaxResponse.header);
+         ajaxResponse.data = await processEncryptedResponse(ajaxResponse);
+         log('request', 'HTTP错误', { statusCode: ajaxResponse.statusCode });
+         return ajaxResponse;
+      }
+      logError('request', '请求失败', error);
+      throw error;
+   }
+};
+
 export const requestSuccess = async <T>(
    config: RequestOptions,
    urlInfo: IUrlInfo,
    res: AjaxResponse,
    resultInfo: RequestResult<T>
 ) => {
-   // 缓存响应头中的公钥
-   cachePublicKeyFromHeader(res.header);
-
-   // 处理加密响应
-   res.data = await processEncryptedResponse(res);
-
    // 状态码 2xx
    if (res.statusCode >= 200 && res.statusCode < 400) {
       // 原始模式：直接返回原始数据，不做任何处理
@@ -359,8 +440,7 @@ export const http = async <T>(
    /// 请求前判断参数是否合规，或者自定义处理headers，如果返回false，则取消执行调用API接口
    if (beforeRes === false) return Promise.resolve(null);
 
-   // 异步前置处理（加密等）
-   await requestBeforeAsync(options, urlInfo);
+   // 注意：加密由 coreRequest 或代理负责，这里不再调用 requestBeforeAsync
 
    if (options.loadingText) {
       toast.loading({

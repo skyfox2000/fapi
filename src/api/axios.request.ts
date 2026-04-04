@@ -1,15 +1,14 @@
 /**
  * 请求支持功能说明
- ** 全局请求配置
- ** 重复请求合并
- ** 请求参数化配置
- ** 查询结果缓存
- ** 查询字段Map
- ** 自定义header
- ** 请求预处理
- ** 结果后处理
+ * ** 全局请求配置
+ * ** 重复请求合并
+ * ** 请求参数化配置
+ * ** 查询结果缓存
+ * ** 查询字段Map
+ * ** 自定义header
+ * ** 请求预处理
+ * ** 结果后处理
  */
-import axios, { AxiosError, AxiosResponse } from "axios";
 import {
    ApiResponse,
    IUrlInfo,
@@ -23,7 +22,11 @@ import {
    requestFail,
    RequestResult,
    requestSuccess,
+   coreRequest,
 } from "./request";
+import { getRequestProxy } from "./index";
+import { deepClone } from "@/utils/data/deepClone";
+import { log } from "@/utils/log";
 
 const request = <T>(
    options: RequestOptions,
@@ -32,55 +35,43 @@ const request = <T>(
    const resultInfo: RequestResult<T> = {
       Result: null,
    };
-   const { header, ...rest } = options;
    // 发送请求
    return new Promise((resolve) => {
-      axios
-         .request({
-            ...rest,
-            ...{
-               headers: header,
-            },
-         })
-         .then(async (res: AxiosResponse) => {
-            await requestSuccess(
-               options,
-               urlInfo,
-               {
-                  statusCode: res.status,
-                  data: res.data,
-                  header: res.headers as Record<string, string>,
-               },
-               resultInfo
-            );
-         })
-         .catch(async (err: AxiosError) => {
-            if (err.response) {
-               if (
-                  err.response.status &&
-                  err.response.status > 200 &&
-                  err.response.status < 600
-               ) {
-                  await requestSuccess(
-                     options,
-                     urlInfo,
-                     {
-                        statusCode: err.response.status,
-                        data: err.response?.data as any,
-                        header: err.response.headers as Record<string, string>,
-                     },
-                     resultInfo
-                  );
-               } else {
-                  requestFail(err, resultInfo);
+      // 检查是否有代理
+      const proxy = getRequestProxy();
+      if (proxy) {
+         log('proxy', '使用代理', { url: options.url, method: options.method });
+         // 创建新对象，避免修改原始对象
+         const proxyOptions = deepClone(options);
+         const proxyUrlInfo = deepClone(urlInfo);
+         // 使用代理
+         proxy(proxyOptions, proxyUrlInfo)
+            .then(async (res) => {
+               if (res) {
+                  await requestSuccess(options, urlInfo, res, resultInfo);
                }
-            } else {
+            })
+            .catch((err) => {
                requestFail(err, resultInfo);
-            }
-         })
-         .finally(() => {
-            requestComplete(urlInfo, resultInfo, resolve);
-         });
+            })
+            .finally(() => {
+               requestComplete(urlInfo, resultInfo, resolve);
+            });
+      } else {
+         // 使用核心请求方法
+         coreRequest(options, urlInfo)
+            .then(async (res) => {
+               if (res) {
+                  await requestSuccess(options, urlInfo, res, resultInfo);
+               }
+            })
+            .catch((err) => {
+               requestFail(err, resultInfo);
+            })
+            .finally(() => {
+               requestComplete(urlInfo, resultInfo, resolve);
+            });
+      }
    });
 };
 

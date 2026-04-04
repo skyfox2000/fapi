@@ -3,7 +3,7 @@
  * 支持 RSA 公钥加密和 AES-GCM 对称加密
  */
 
-import { isDebugEnabled } from "@/api/crypto.config";
+import { isLogEnabled } from "@/utils/log";
 
 // 全局缓存的 RSA 公钥（内存存储）
 let cachedPublicKey: string | null = null;
@@ -17,7 +17,7 @@ let tempAesKey: CryptoKey | null = null;
  * @param data 数据
  */
 const debugLog = (label: string, data?: any): void => {
-  if (!isDebugEnabled()) return;
+  if (!isLogEnabled('crypto')) return;
   
   if (data !== undefined) {
     if (data instanceof Uint8Array) {

@@ -16,13 +16,6 @@ export interface CryptoConfig {
   enabled: boolean;
 
   /**
-   * 是否启用调试模式
-   * 启用后会输出加密/解密过程中的关键信息（如密钥、参数等）
-   * 默认: false
-   */
-  debug?: boolean;
-
-  /**
    * 需要加密的 API 列表
    * 支持字符串（精确匹配）或正则表达式
    * 如果为空数组且 enabled 为 true，则所有 API_HOST 下的接口都会加密
@@ -108,14 +101,6 @@ export const initCrypto = (
 };
 
 
-
-/**
- * 检查是否启用了调试模式
- * @returns boolean
- */
-export const isDebugEnabled = (): boolean => {
-  return globalCryptoConfig.debug === true;
-};
 
 /**
  * 检查当前是否启用了加密通信

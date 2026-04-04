@@ -11,6 +11,7 @@ import {
   setPublicKey,
 } from "@/utils/crypto";
 import { shouldEncryptUrl } from "./crypto.config";
+import { log, logError } from "@/utils/log";
 
 /**
  * 处理加密请求 - 在请求发送前调用
@@ -36,6 +37,7 @@ export const processEncryptedRequest = async (
   try {
     const encrypted = await encryptRequest(options.data);
     if (encrypted) {
+      log('crypto', '请求加密', { originalData: options.data });
       // 替换请求体为密文
       options.data = encrypted.encryptedData;
       // 添加加密相关请求头
@@ -44,10 +46,11 @@ export const processEncryptedRequest = async (
       }
       options.header["X-Encrypted-Key"] = encrypted.encryptedKey;
       options.header["X-Nonce"] = encrypted.nonce;
+      log('crypto', '请求加密完成');
       return true;
     }
   } catch (error) {
-    console.error("请求加密失败:", error);
+    logError('crypto', '请求加密失败', error);
   }
 
   return false;
@@ -70,24 +73,24 @@ export const processEncryptedResponse = async (
 
       // 检查数据格式：支持直接字符串或 { encrypted: "base64" } 格式
       if (typeof res.data === "string" && isEncryptedResponse(res.data)) {
-        // 直接返回加密字符串
         encryptedData = res.data;
       } else if (typeof res.data === "object" && res.data !== null) {
-        // 检查是否为 { encrypted: "base64" } 格式
         if ("encrypted" in res.data && typeof res.data.encrypted === "string") {
           encryptedData = res.data.encrypted;
-          console.log("[Crypto] 检测到 JSON 格式加密响应:", { encrypted: res.data.encrypted.slice(0, 50) + "..." });
         }
       }
 
       if (encryptedData && isEncryptedResponse(encryptedData)) {
         const decrypted = await decryptResponse(encryptedData, responseNonce);
         if (decrypted !== null) {
+          log('crypto', '响应解密', { decryptedData: decrypted });
           return decrypted;
+        } else {
+          logError('crypto', '响应解密失败: 返回null', { nonce: responseNonce });
         }
       }
     } catch (error) {
-      console.error("响应解密失败:", error);
+      logError('crypto', '响应解密失败', error);
     }
   }
 
@@ -108,7 +111,9 @@ export const cachePublicKeyFromHeader = (
   if (publicKey) {
     const success = setPublicKey(publicKey);
     if (!success) {
-      console.warn("[Crypto] 公钥已存在，忽略响应头中的公钥（加密方式初始化后不可更改）");
+      log('crypto', '公钥已存在，忽略响应头中的公钥');
+    } else {
+      log('crypto', '从响应头缓存公钥成功');
     }
   }
 };

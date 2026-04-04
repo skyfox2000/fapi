@@ -10,6 +10,23 @@ let globalBefore: ((config: Record<string, any>) => boolean | void) | undefined;
 /** 全局 after 拦截器 */
 let globalAfter: ((config: Record<string, any>, result: any, res?: AjaxResponse) => void) | undefined;
 
+/** 请求代理函数类型 - 接收已处理的 options，返回原始响应 */
+export type RequestProxyFn = (
+   options: RequestOptions,
+   urlInfo: IUrlInfo
+) => Promise<AjaxResponse | null>;
+
+/** 请求代理 */
+let requestProxy: RequestProxyFn | null = null;
+
+/** 设置请求代理 */
+export const setRequestProxy = (proxyFn: RequestProxyFn | null) => {
+   requestProxy = proxyFn;
+};
+
+/** 获取请求代理 */
+export const getRequestProxy = () => requestProxy;
+
 /** 添加全局请求、结果拦截器、参数 */
 export const globalRequestOption = (config: RequestOptions & Pick<IUrlInfo, 'before' | 'after'>) => {
    const { before, after, ...rest } = config;

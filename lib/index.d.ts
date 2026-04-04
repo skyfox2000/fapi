@@ -1,6 +1,6 @@
 import { ResponseType as ResponseType_2 } from 'axios';
 
-declare type AjaxResponse = {
+export declare type AjaxResponse = {
     statusCode: number;
     data: AnyData;
     header?: Record<string, string>;
@@ -42,9 +42,10 @@ export declare type ApiResponse<T = AnyData> = {
     data?: T | FindResult;
 };
 
+export declare const coreRequest: (options: RequestOptions, urlInfo: IUrlInfo) => Promise<AjaxResponse | null>;
+
 declare interface CryptoConfig {
     enabled: boolean;
-    debug?: boolean;
     includeApis?: (string | RegExp)[];
     excludeApis?: (string | RegExp)[];
     includeHostKeys?: string[];
@@ -110,6 +111,8 @@ export declare const ICON_HOST: {
 };
 
 export declare const initCrypto: (config?: Partial<CryptoConfig>) => void;
+
+export declare const initLog: (config: Partial<LogConfig>) => void;
 
 export declare const isJSON: (value: any) => boolean;
 
@@ -247,6 +250,13 @@ export declare type IUrlInfo = {
     trace?: boolean;
 };
 
+declare interface LogConfig {
+    enabled: boolean;
+    modules: Record<LogModule, boolean>;
+}
+
+export declare type LogModule = 'crypto' | 'request' | 'proxy' | 'cache' | 'auth';
+
 export declare const parseFieldTemplate: (template: string, data: Record<string, any>) => string;
 
 /**
@@ -264,7 +274,7 @@ export declare type ReqParams<T = AnyData> = {
     Data?: AnyData;
 };
 
-declare type RequestOptions = {
+export declare type RequestOptions = {
     /**
      * 资源url
      */
@@ -358,6 +368,8 @@ declare type RequestOptions = {
     complete?: () => void;
 };
 
+export declare type RequestProxyFn = (options: RequestOptions, urlInfo: IUrlInfo) => Promise<AjaxResponse | null>;
+
 export declare enum ResStatus {
     SUCCESS = "success",
     ERROR = "error",
@@ -367,7 +379,11 @@ export declare const SERVER_HOST: {
     [key: string]: string;
 };
 
+export declare const setRequestProxy: (proxyFn: RequestProxyFn | null) => void;
+
 export declare const setToken: (token: string) => void;
+
+export declare const setTokenCallback: (callback: (() => string) | null) => void;
 
 declare interface ShowToastOptions {
     title?: string;
