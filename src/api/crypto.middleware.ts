@@ -13,65 +13,68 @@ import {
 import { shouldEncryptUrl } from "./crypto.config";
 import { log, logError } from "@/utils/log";
 
+export interface EncryptResult {
+  encrypted: boolean;
+  aesKey?: CryptoKey;
+}
+
 /**
  * 处理加密请求 - 在请求发送前调用
  * @param options 请求选项
  * @param urlInfo URL信息
- * @returns 是否进行了加密处理
+ * @returns 加密结果，包含是否加密和 AES 密钥
  */
 export const processEncryptedRequest = async (
   options: RequestOptions,
   urlInfo: IUrlInfo
-): Promise<boolean> => {
-  // 检查是否需要加密
+): Promise<EncryptResult> => {
+  const result: EncryptResult = { encrypted: false };
+
   if (!shouldEncryptUrl(options.url || "", urlInfo.api)) {
-    return false;
+    return result;
   }
 
-  // 只加密有 body 的请求 (POST, PUT, DELETE)
   const method = options.method?.toUpperCase();
   if (method === "GET" || !options.data) {
-    return false;
+    return result;
   }
 
   try {
     const encrypted = await encryptRequest(options.data);
     if (encrypted) {
       log('crypto', '请求加密', { originalData: options.data });
-      // 替换请求体为密文
       options.data = encrypted.encryptedData;
-      // 添加加密相关请求头
       if (!options.header) {
         options.header = {};
       }
       options.header["X-Encrypted-Key"] = encrypted.encryptedKey;
       options.header["X-Nonce"] = encrypted.nonce;
       log('crypto', '请求加密完成');
-      return true;
+      return { encrypted: true, aesKey: encrypted.aesKey };
     }
   } catch (error) {
     logError('crypto', '请求加密失败', error);
   }
 
-  return false;
+  return result;
 };
 
 /**
  * 处理加密响应 - 在收到响应后调用
  * @param res 响应对象
+ * @param aesKey AES 密钥（从加密请求时返回）
  * @returns 解密后的数据
  */
 export const processEncryptedResponse = async (
-  res: AjaxResponse
+  res: AjaxResponse,
+  aesKey?: CryptoKey
 ): Promise<any> => {
   const responseNonce = res.header?.["x-response-nonce"] || res.header?.["X-Response-Nonce"];
 
-  // 如果有响应 nonce，说明响应是加密的
-  if (responseNonce && res.data) {
+  if (responseNonce && res.data && aesKey) {
     try {
       let encryptedData: string | null = null;
 
-      // 检查数据格式：支持直接字符串或 { encrypted: "base64" } 格式
       if (typeof res.data === "string" && isEncryptedResponse(res.data)) {
         encryptedData = res.data;
       } else if (typeof res.data === "object" && res.data !== null) {
@@ -81,7 +84,7 @@ export const processEncryptedResponse = async (
       }
 
       if (encryptedData && isEncryptedResponse(encryptedData)) {
-        const decrypted = await decryptResponse(encryptedData, responseNonce);
+        const decrypted = await decryptResponse(encryptedData, responseNonce, aesKey);
         if (decrypted !== null) {
           log('crypto', '响应解密', { decryptedData: decrypted });
           return decrypted;
@@ -94,7 +97,6 @@ export const processEncryptedResponse = async (
     }
   }
 
-  // 未加密或解密失败，返回原始数据
   return res.data;
 };
 

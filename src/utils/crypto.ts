@@ -8,9 +8,6 @@ import { isLogEnabled } from "@/utils/log";
 // 全局缓存的 RSA 公钥（内存存储）
 let cachedPublicKey: string | null = null;
 
-// 每次请求临时存储的 AES 密钥（用于解密响应）
-let tempAesKey: CryptoKey | null = null;
-
 /**
  * 调试日志输出
  * @param label 标签
@@ -248,11 +245,11 @@ const decryptWithAES = async (
 /**
  * 加密请求数据
  * @param data 原始请求数据
- * @returns 加密后的数据和相关头部信息，如果未设置公钥则返回 null
+ * @returns 加密后的数据和相关头部信息，包含 AES 密钥供后续解密使用
  */
 export const encryptRequest = async (
   data: any
-): Promise<{ encryptedData: string; encryptedKey: string; nonce: string } | null> => {
+): Promise<{ encryptedData: string; encryptedKey: string; nonce: string; aesKey: CryptoKey } | null> => {
   if (!cachedPublicKey) {
     return null;
   }
@@ -262,33 +259,29 @@ export const encryptRequest = async (
     debugLog("原始数据", data);
     debugLog("RSA 公钥", cachedPublicKey);
 
-    // 1. 生成临时的 AES-256 密钥
     const aesKey = await generateAesKey();
-    tempAesKey = aesKey; // 保存临时密钥用于解密响应
 
-    // 2. 导出 AES 密钥
     const aesKeyRaw = await exportAesKey(aesKey);
     debugLog("AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
     debugLog("AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
 
-    // 3. 用 RSA 公钥加密 AES 密钥
     const encryptedKey = await encryptAesKeyWithRSA(aesKeyRaw, cachedPublicKey);
     debugLog("RSA 加密后的 AES 密钥 (X-Encrypted-Key)", encryptedKey);
 
-    // 4. 用 AES 密钥加密请求数据
     const { ciphertext, nonce } = await encryptWithAES(data, aesKey);
     debugLog("AES 加密后的数据 (encryptedData)", ciphertext);
     debugLog("Nonce (X-Nonce)", nonce);
+
     debugLog("========== 加密请求结束 ==========");
 
     return {
       encryptedData: ciphertext,
       encryptedKey,
       nonce,
+      aesKey,
     };
   } catch (error) {
     console.error("加密请求数据失败:", error);
-    tempAesKey = null;
     return null;
   }
 };
@@ -297,38 +290,27 @@ export const encryptRequest = async (
  * 解密响应数据
  * @param ciphertext Base64 编码的密文
  * @param nonce Base64 编码的 nonce（从 X-Response-Nonce 头获取）
+ * @param aesKey AES 密钥（从加密请求时返回）
  * @returns 解密后的数据对象，如果解密失败则返回 null
  */
 export const decryptResponse = async (
   ciphertext: string,
-  nonce: string
+  nonce: string,
+  aesKey: CryptoKey
 ): Promise<any | null> => {
-  if (!tempAesKey) {
-    debugLog("解密失败: 没有可用的 AES 密钥");
-    return null;
-  }
+  debugLog("========== 解密响应开始 ==========");
+  debugLog("加密数据 (ciphertext)", ciphertext);
+  debugLog("响应 Nonce (X-Response-Nonce)", nonce);
 
   try {
-    debugLog("========== 解密响应开始 ==========");
-    debugLog("加密数据 (ciphertext)", ciphertext);
-    debugLog("Nonce (X-Response-Nonce)", nonce);
-
-    // 导出当前 AES 密钥用于调试
-    const aesKeyRaw = await exportAesKey(tempAesKey);
-    debugLog("解密使用的 AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
-    debugLog("解密使用的 AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
-
-    const decrypted = await decryptWithAES(ciphertext, nonce, tempAesKey);
+    const decrypted = await decryptWithAES(ciphertext, nonce, aesKey);
     debugLog("解密后的数据", decrypted);
     debugLog("========== 解密响应结束 ==========");
-
-    // 解密完成后清除临时密钥
-    tempAesKey = null;
     return decrypted;
   } catch (error) {
     console.error("解密响应数据失败:", error);
     debugLog("解密错误", error);
-    tempAesKey = null;
+    debugLog("========== 解密响应结束 ==========");
     return null;
   }
 };

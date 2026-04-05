@@ -197,16 +197,13 @@ export const coreRequest = async (
    log('request', '开始请求', { url: options.url, method: options.method, hasProxy });
    
    try {
-      // 1. 注入token（调用现有方法）
       if (!injectToken(options, urlInfo)) {
          logError('request', 'Token注入失败', { url: options.url });
          return null;
       }
 
-      // 2. 加密请求（调用现有方法）
-      await processEncryptedRequest(options, urlInfo);
+      const encryptResult = await processEncryptedRequest(options, urlInfo);
 
-      // 3. 发送 HTTP 请求
       log('request', '发送HTTP请求');
       const { header, ...rest } = options;
       const response = await axios.request({
@@ -214,7 +211,6 @@ export const coreRequest = async (
          headers: header,
       });
 
-      // 4. 构造 AjaxResponse
       const ajaxResponse: AjaxResponse = {
          statusCode: response.status,
          data: response.data,
@@ -226,11 +222,9 @@ export const coreRequest = async (
          header: ajaxResponse.header
       });
 
-      // 5. 缓存公钥（调用现有方法）
       cachePublicKeyFromHeader(ajaxResponse.header);
 
-      // 6. 解密响应（调用现有方法）
-      ajaxResponse.data = await processEncryptedResponse(ajaxResponse);
+      ajaxResponse.data = await processEncryptedResponse(ajaxResponse, encryptResult.aesKey);
 
       log('request', '请求完成', { statusCode: ajaxResponse.statusCode });
       return ajaxResponse;
