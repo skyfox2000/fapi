@@ -368,7 +368,6 @@ export const requestSuccess = async <T>(
 
 export const requestFail = <T>(netErr: any, resultInfo: RequestResult<T>) => {
    // 失败回调:处理http网络错误的
-   console.error(netErr);
    const err: ApiResponse = {
       status: ResStatus.ERROR,
       errno: 1000,

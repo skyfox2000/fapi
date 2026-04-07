@@ -42,6 +42,14 @@ export interface CryptoConfig {
    * 优先级高于 includeHostKeys
    */
   excludeHostKeys?: string[];
+
+  /**
+   * 不需要加密的子应用标识列表（黑名单）
+   * 如果请求的 urlInfo.subApp 在此列表中，则该请求不加密
+   * 优先级高于其他配置
+   * 例如: ['app1', 'app2']
+   */
+  excludeSubApps?: string[];
 }
 
 // 全局加密配置
@@ -51,6 +59,7 @@ let globalCryptoConfig: CryptoConfig = {
   excludeApis: [],
   includeHostKeys: [],
   excludeHostKeys: [],
+  excludeSubApps: [],
 };
 
 /**
@@ -115,22 +124,30 @@ export const isCryptoEnabled = (): boolean => {
  * 检查指定请求是否需要加密
  * @param url 请求 URL
  * @param apiKey API 配置键（如 'SITEHOST_API'）
+ * @param subApp 子应用标识
  * @returns boolean
  */
-export const shouldEncryptUrl = (url: string, apiKey?: string): boolean => {
+export const shouldEncryptUrl = (url: string, apiKey?: string, subApp?: string): boolean => {
   // 如果加密未启用或没有公钥，不需要加密
   if (!isCryptoEnabled()) {
     return false;
   }
 
-  // 1. 先检查 API_HOST key 级别的排除列表（优先级最高）
+  // 1. 先检查子应用级别的排除列表（优先级最高）
+  if (subApp && globalCryptoConfig.excludeSubApps && globalCryptoConfig.excludeSubApps.length > 0) {
+    if (globalCryptoConfig.excludeSubApps.includes(subApp)) {
+      return false;
+    }
+  }
+
+  // 2. 检查 API_HOST key 级别的排除列表
   if (apiKey && globalCryptoConfig.excludeHostKeys && globalCryptoConfig.excludeHostKeys.length > 0) {
     if (globalCryptoConfig.excludeHostKeys.includes(apiKey)) {
       return false;
     }
   }
 
-  // 2. 检查 API_HOST key 级别的包含列表
+  // 3. 检查 API_HOST key 级别的包含列表
   if (globalCryptoConfig.includeHostKeys && globalCryptoConfig.includeHostKeys.length > 0) {
     // 如果配置了 includeHostKeys，但当前 apiKey 不匹配，则不加密
     if (!apiKey || !globalCryptoConfig.includeHostKeys.includes(apiKey)) {
@@ -138,7 +155,7 @@ export const shouldEncryptUrl = (url: string, apiKey?: string): boolean => {
     }
   }
 
-  // 3. 检查 API 级别的排除列表
+  // 4. 检查 API 级别的排除列表
   if (globalCryptoConfig.excludeApis && globalCryptoConfig.excludeApis.length > 0) {
     for (const pattern of globalCryptoConfig.excludeApis) {
       if (typeof pattern === "string") {
@@ -153,7 +170,7 @@ export const shouldEncryptUrl = (url: string, apiKey?: string): boolean => {
     }
   }
 
-  // 4. 检查 API 级别的包含列表
+  // 5. 检查 API 级别的包含列表
   if (
     !globalCryptoConfig.includeApis ||
     globalCryptoConfig.includeApis.length === 0

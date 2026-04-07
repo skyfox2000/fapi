@@ -30,7 +30,7 @@ export const processEncryptedRequest = async (
 ): Promise<EncryptResult> => {
   const result: EncryptResult = { encrypted: false };
 
-  if (!shouldEncryptUrl(options.url || "", urlInfo.api)) {
+  if (!shouldEncryptUrl(options.url || "", urlInfo.api, urlInfo.subApp)) {
     return result;
   }
 

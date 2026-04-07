@@ -200,6 +200,7 @@ export type ReqParams<T = AnyData> = {
  ** before?: 调用前置处理
  ** after?: 调用后置处理
  ** trace?: 是否跟踪调用链，请求结果发送到运维服务器
+ ** subApp?: 所属子应用标识，用于加密控制等场景
  * @example 查询请求过程执行次序
  * -> cache? 缓存判断获取返回
  * -> headers? 处理请求头数据
@@ -316,6 +317,10 @@ export type IUrlInfo = {
     * 是否跟踪调用链，请求结果发送到运维服务器
     */
    trace?: boolean;
+   /**
+    * 所属子应用标识，用于加密控制等场景
+    */
+   subApp?: string;
 };
 
 // uni.uploadFile文件上传参数
