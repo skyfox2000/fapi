@@ -60,7 +60,7 @@ export {
 export { getToken, setToken, setTokenCallback } from "@/utils/call/auth"
 
 // 从utils/log导出
-export { initLog, type LogModule } from "@/utils/log"
+export { initApiLog, type LogModule } from "@/utils/log"
 export { deepClone } from "@/utils/data/deepClone"
 export { fieldMapping, parseFieldTemplate } from "@/utils/data/fieldMap"
 export { isJSON } from "@/utils/data/isJSON"

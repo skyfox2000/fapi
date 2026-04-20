@@ -3,7 +3,14 @@
  * 用于控制哪些接口需要加密，哪些不需要
  */
 
-import { hasPublicKey } from "@/utils/crypto";
+
+
+/**
+ * 匹配模式类型
+ * - 普通字符串：使用 includes 进行子串匹配
+ * - ~() 包裹的字符串：作为正则表达式匹配，例如 ~(\/api\/secure\/.+)
+ */
+type MatchPattern = string;
 
 /**
  * 加密配置选项
@@ -17,39 +24,41 @@ export interface CryptoConfig {
 
   /**
    * 需要加密的 API 列表
-   * 支持字符串（精确匹配）或正则表达式
+   * 支持字符串（子串匹配）或正则表达式字符串（~()包裹）
+   * 例如: ['/api/secure', '~(/api/user/.+)']
    * 如果为空数组且 enabled 为 true，则所有 API_HOST 下的接口都会加密
    */
-  includeApis?: (string | RegExp)[];
+  includeApis?: MatchPattern[];
 
   /**
    * 不需要加密的 API 列表（黑名单）
-   * 支持字符串（精确匹配）或正则表达式
+   * 支持字符串（子串匹配）或正则表达式字符串（~()包裹）
    * 优先级高于 includeApis
    */
-  excludeApis?: (string | RegExp)[];
+  excludeApis?: MatchPattern[];
 
   /**
    * 需要加密的 API_HOST key 列表
-   * 例如: ['SITEHOST_API', 'SECURE_API']
+   * 支持字符串（精确匹配）或正则表达式字符串（~()包裹）
+   * 例如: ['SITEHOST_API', '~(SECURE_.*)']
    * 如果配置了此列表，只有这些 API_HOST 下的接口才会被加密
    */
-  includeHostKeys?: string[];
+  includeHostKeys?: MatchPattern[];
 
   /**
    * 不需要加密的 API_HOST key 列表（黑名单）
-   * 例如: ['PUBLIC_API', 'STATIC_API']
+   * 支持字符串（精确匹配）或正则表达式字符串（~()包裹）
    * 优先级高于 includeHostKeys
    */
-  excludeHostKeys?: string[];
+  excludeHostKeys?: MatchPattern[];
 
   /**
    * 不需要加密的子应用标识列表（黑名单）
-   * 如果请求的 urlInfo.subApp 在此列表中，则该请求不加密
+   * 支持字符串（精确匹配）或正则表达式字符串（~()包裹）
    * 优先级高于其他配置
-   * 例如: ['app1', 'app2']
+   * 例如: ['app1', '~(test_.*)']
    */
-  excludeSubApps?: string[];
+  excludeSubApps?: MatchPattern[];
 }
 
 // 全局加密配置
@@ -60,6 +69,66 @@ let globalCryptoConfig: CryptoConfig = {
   includeHostKeys: [],
   excludeHostKeys: [],
   excludeSubApps: [],
+};
+
+/**
+ * 解析匹配模式
+ * @param pattern 匹配模式字符串
+ * @returns 解析结果：{ type: 'string' | 'regex', value: string | RegExp }
+ */
+const parsePattern = (pattern: MatchPattern): { type: 'string' | 'regex'; value: string | RegExp } => {
+  // 检查是否是正则表达式格式 ~(pattern)
+  const regexMatch = pattern.match(/^~\((.*)\)$/);
+  if (regexMatch) {
+    try {
+      return { type: 'regex', value: new RegExp(regexMatch[1]) };
+    } catch (e) {
+      console.warn(`[Crypto Config] 无效的正则表达式: ${pattern}`);
+      return { type: 'string', value: pattern };
+    }
+  }
+  return { type: 'string', value: pattern };
+};
+
+/**
+ * 检查值是否匹配模式
+ * @param value 要检查的值
+ * @param pattern 匹配模式
+ * @param matchType 匹配类型：'includes' 表示子串匹配，'exact' 表示精确匹配
+ * @returns 是否匹配
+ */
+const matchesPattern = (value: string, pattern: MatchPattern, matchType: 'includes' | 'exact' = 'includes'): boolean => {
+  const parsed = parsePattern(pattern);
+  
+  if (parsed.type === 'regex') {
+    return (parsed.value as RegExp).test(value);
+  }
+  
+  // 字符串匹配
+  if (matchType === 'exact') {
+    return value === parsed.value;
+  }
+  return value.includes(parsed.value as string);
+};
+
+/**
+ * 检查值是否匹配任一模式列表
+ * @param value 要检查的值
+ * @param patterns 模式列表
+ * @param matchType 匹配类型
+ * @returns 是否匹配任一模式
+ */
+const matchesAnyPattern = (value: string, patterns: MatchPattern[] | undefined, matchType: 'includes' | 'exact' = 'includes'): boolean => {
+  if (!patterns || patterns.length === 0) {
+    return false;
+  }
+  
+  for (const pattern of patterns) {
+    if (matchesPattern(value, pattern, matchType)) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -74,38 +143,37 @@ let globalCryptoConfig: CryptoConfig = {
  * // 只加密特定接口
  * initCrypto({
  *   enabled: true,
- *   includeApis: ['user/login', 'user/register']
+ *   includeApis: ['/api/secure', '~(/api/user/.+)']
  * });
  *
  * @example
  * // 加密所有接口，但排除特定接口
  * initCrypto({
  *   enabled: true,
- *   excludeApis: ['public/info', /health/]
+ *   excludeApis: ['/public/', '~(/health/.*)']
  * });
  *
  * @example
  * // 只加密特定 API_HOST 的接口
  * initCrypto({
  *   enabled: true,
- *   includeHostKeys: ['SITEHOST_API', 'SECURE_API']
+ *   includeHostKeys: ['SITEHOST_API', '~(SECURE_.*)']
  * });
  *
  * @example
  * // 加密所有接口，但排除特定 API_HOST
  * initCrypto({
  *   enabled: true,
- *   excludeHostKeys: ['PUBLIC_API', 'STATIC_API']
+ *   excludeHostKeys: ['PUBLIC_API', '~(TEST_.*)']
  * });
  */
 export const initCrypto = (
   config?: Partial<CryptoConfig>
 ): void => {
-  // 合并配置
+  // 合并配置，允许用户控制 enabled
   globalCryptoConfig = {
     ...globalCryptoConfig,
     ...config,
-    enabled: true,
   };
 };
 
@@ -113,11 +181,11 @@ export const initCrypto = (
 
 /**
  * 检查当前是否启用了加密通信
- * 只要有公钥就启用加密（通过 initCrypto 或响应头 X-Public-Key 设置）
+ * 基于 globalCryptoConfig.enabled 配置
  * @returns boolean
  */
 export const isCryptoEnabled = (): boolean => {
-  return hasPublicKey();
+  return globalCryptoConfig.enabled;
 };
 
 /**
@@ -128,21 +196,21 @@ export const isCryptoEnabled = (): boolean => {
  * @returns boolean
  */
 export const shouldEncryptUrl = (url: string, apiKey?: string, subApp?: string): boolean => {
-  // 如果加密未启用或没有公钥，不需要加密
-  if (!isCryptoEnabled()) {
+  // 如果加密未启用，不需要加密
+  if (!globalCryptoConfig.enabled) {
     return false;
   }
 
   // 1. 先检查子应用级别的排除列表（优先级最高）
   if (subApp && globalCryptoConfig.excludeSubApps && globalCryptoConfig.excludeSubApps.length > 0) {
-    if (globalCryptoConfig.excludeSubApps.includes(subApp)) {
+    if (matchesAnyPattern(subApp, globalCryptoConfig.excludeSubApps, 'exact')) {
       return false;
     }
   }
 
   // 2. 检查 API_HOST key 级别的排除列表
   if (apiKey && globalCryptoConfig.excludeHostKeys && globalCryptoConfig.excludeHostKeys.length > 0) {
-    if (globalCryptoConfig.excludeHostKeys.includes(apiKey)) {
+    if (matchesAnyPattern(apiKey, globalCryptoConfig.excludeHostKeys, 'exact')) {
       return false;
     }
   }
@@ -150,23 +218,15 @@ export const shouldEncryptUrl = (url: string, apiKey?: string, subApp?: string):
   // 3. 检查 API_HOST key 级别的包含列表
   if (globalCryptoConfig.includeHostKeys && globalCryptoConfig.includeHostKeys.length > 0) {
     // 如果配置了 includeHostKeys，但当前 apiKey 不匹配，则不加密
-    if (!apiKey || !globalCryptoConfig.includeHostKeys.includes(apiKey)) {
+    if (!apiKey || !matchesAnyPattern(apiKey, globalCryptoConfig.includeHostKeys, 'exact')) {
       return false;
     }
   }
 
   // 4. 检查 API 级别的排除列表
   if (globalCryptoConfig.excludeApis && globalCryptoConfig.excludeApis.length > 0) {
-    for (const pattern of globalCryptoConfig.excludeApis) {
-      if (typeof pattern === "string") {
-        if (url.includes(pattern)) {
-          return false;
-        }
-      } else if (pattern instanceof RegExp) {
-        if (pattern.test(url)) {
-          return false;
-        }
-      }
+    if (matchesAnyPattern(url, globalCryptoConfig.excludeApis, 'includes')) {
+      return false;
     }
   }
 
@@ -180,16 +240,8 @@ export const shouldEncryptUrl = (url: string, apiKey?: string, subApp?: string):
   }
 
   // 检查是否在 API 包含列表中
-  for (const pattern of globalCryptoConfig.includeApis) {
-    if (typeof pattern === "string") {
-      if (url.includes(pattern)) {
-        return true;
-      }
-    } else if (pattern instanceof RegExp) {
-      if (pattern.test(url)) {
-        return true;
-      }
-    }
+  if (matchesAnyPattern(url, globalCryptoConfig.includeApis, 'includes')) {
+    return true;
   }
 
   // 默认不加密

@@ -39,16 +39,16 @@ const logConfig: LogConfig = {
  * 
  * @example
  * // 启用所有日志
- * initLog({ enabled: true });
- * 
+ * initApiLog({ enabled: true });
+ *
  * @example
  * // 只启用特定模块日志
- * initLog({ 
- *   enabled: true, 
- *   modules: { crypto: true, request: true } 
+ * initApiLog({
+ *   enabled: true,
+ *   modules: { crypto: true, request: true }
  * });
  */
-export const initLog = (config: Partial<LogConfig>): void => {
+export const initApiLog = (config: Partial<LogConfig>): void => {
    if (config.enabled !== undefined) {
       logConfig.enabled = config.enabled;
    }

@@ -1,9 +1,11 @@
 /**
  * 加密通信工具模块
  * 支持 RSA 公钥加密和 AES-GCM 对称加密
+ * 优先使用 Web Crypto API (crypto.subtle)，不支持时降级到 node-forge
  */
 
 import { isLogEnabled } from "@/utils/log";
+import forge from "node-forge";
 
 // 全局缓存的 RSA 公钥（内存存储）
 let cachedPublicKey: string | null = null;
@@ -64,6 +66,18 @@ export const clearPublicKey = (): void => {
  */
 export const hasPublicKey = (): boolean => {
   return cachedPublicKey !== null;
+};
+
+/**
+ * 检查是否支持 Web Crypto API
+ * @returns boolean
+ */
+const isWebCryptoSupported = (): boolean => {
+  return (
+    typeof crypto !== "undefined" &&
+    crypto.subtle !== undefined &&
+    typeof crypto.subtle.generateKey === "function"
+  );
 };
 
 /**
@@ -249,7 +263,7 @@ const decryptWithAES = async (
  */
 export const encryptRequest = async (
   data: any
-): Promise<{ encryptedData: string; encryptedKey: string; nonce: string; aesKey: CryptoKey } | null> => {
+): Promise<{ encryptedData: string; encryptedKey: string; nonce: string; aesKey: CryptoKey | Uint8Array } | null> => {
   if (!cachedPublicKey) {
     return null;
   }
@@ -258,28 +272,54 @@ export const encryptRequest = async (
     debugLog("========== 加密请求开始 ==========");
     debugLog("原始数据", data);
     debugLog("RSA 公钥", cachedPublicKey);
+    debugLog("使用 Web Crypto API:", isWebCryptoSupported());
 
-    const aesKey = await generateAesKey();
+    if (isWebCryptoSupported()) {
+      // 使用 Web Crypto API (HTTPS 环境)
+      const aesKey = await generateAesKey();
 
-    const aesKeyRaw = await exportAesKey(aesKey);
-    debugLog("AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
-    debugLog("AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
+      const aesKeyRaw = await exportAesKey(aesKey);
+      debugLog("AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
+      debugLog("AES 密钥 (Hex)", Array.from(aesKeyRaw).map(b => b.toString(16).padStart(2, '0')).join(''));
 
-    const encryptedKey = await encryptAesKeyWithRSA(aesKeyRaw, cachedPublicKey);
-    debugLog("RSA 加密后的 AES 密钥 (X-Encrypted-Key)", encryptedKey);
+      const encryptedKey = await encryptAesKeyWithRSA(aesKeyRaw, cachedPublicKey);
+      debugLog("RSA 加密后的 AES 密钥 (X-Encrypted-Key)", encryptedKey);
 
-    const { ciphertext, nonce } = await encryptWithAES(data, aesKey);
-    debugLog("AES 加密后的数据 (encryptedData)", ciphertext);
-    debugLog("Nonce (X-Nonce)", nonce);
+      const { ciphertext, nonce } = await encryptWithAES(data, aesKey);
+      debugLog("AES 加密后的数据 (encryptedData)", ciphertext);
+      debugLog("Nonce (X-Nonce)", nonce);
 
-    debugLog("========== 加密请求结束 ==========");
+      debugLog("========== 加密请求结束 ==========");
 
-    return {
-      encryptedData: ciphertext,
-      encryptedKey,
-      nonce,
-      aesKey,
-    };
+      return {
+        encryptedData: ciphertext,
+        encryptedKey,
+        nonce,
+        aesKey,
+      };
+    } else {
+      // 使用降级方案 (HTTP 环境)
+      debugLog("使用降级方案 (node-forge)");
+
+      const aesKeyRaw = generateAesKeyFallback();
+      debugLog("AES 密钥 (Base64)", arrayBufferToBase64(aesKeyRaw));
+
+      const encryptedKey = encryptAesKeyWithRSAFallback(aesKeyRaw, cachedPublicKey);
+      debugLog("RSA 加密后的 AES 密钥 (X-Encrypted-Key)", encryptedKey);
+
+      const { ciphertext, nonce } = encryptWithAESFallback(data, aesKeyRaw);
+      debugLog("AES 加密后的数据 (encryptedData)", ciphertext);
+      debugLog("Nonce (X-Nonce)", nonce);
+
+      debugLog("========== 加密请求结束 ==========");
+
+      return {
+        encryptedData: ciphertext,
+        encryptedKey,
+        nonce,
+        aesKey: aesKeyRaw,
+      };
+    }
   } catch (error) {
     console.error("加密请求数据失败:", error);
     return null;
@@ -290,20 +330,29 @@ export const encryptRequest = async (
  * 解密响应数据
  * @param ciphertext Base64 编码的密文
  * @param nonce Base64 编码的 nonce（从 X-Response-Nonce 头获取）
- * @param aesKey AES 密钥（从加密请求时返回）
+ * @param aesKey AES 密钥（从加密请求时返回，可能是 CryptoKey 或 Uint8Array）
  * @returns 解密后的数据对象，如果解密失败则返回 null
  */
 export const decryptResponse = async (
   ciphertext: string,
   nonce: string,
-  aesKey: CryptoKey
+  aesKey: CryptoKey | Uint8Array
 ): Promise<any | null> => {
   debugLog("========== 解密响应开始 ==========");
   debugLog("加密数据 (ciphertext)", ciphertext);
   debugLog("响应 Nonce (X-Response-Nonce)", nonce);
 
   try {
-    const decrypted = await decryptWithAES(ciphertext, nonce, aesKey);
+    let decrypted: any;
+
+    if (aesKey instanceof CryptoKey) {
+      // 使用 Web Crypto API
+      decrypted = await decryptWithAES(ciphertext, nonce, aesKey);
+    } else {
+      // 使用降级方案
+      decrypted = decryptWithAESFallback(ciphertext, nonce, aesKey);
+    }
+
     debugLog("解密后的数据", decrypted);
     debugLog("========== 解密响应结束 ==========");
     return decrypted;
@@ -326,4 +375,137 @@ export const isEncryptedResponse = (data: any): boolean => {
     data.length > 0 &&
     /^[A-Za-z0-9+/=]+$/.test(data)
   );
+};
+
+// ==================== HTTP 环境降级实现 (node-forge) ====================
+
+/**
+ * 使用 RSA 公钥加密 AES 密钥（node-forge 实现，用于 HTTP 环境）
+ * 使用 RSA-OAEP 算法（SHA-256）
+ * @param aesKey 原始 AES 密钥字节
+ * @param publicKey PEM 格式的 RSA 公钥
+ * @returns Base64 编码的加密密钥
+ */
+const encryptAesKeyWithRSAFallback = (
+  aesKey: Uint8Array,
+  publicKey: string
+): string => {
+  // 解析 PEM 公钥
+  const publicKeyObj = forge.pki.publicKeyFromPem(publicKey);
+
+  // 将 Uint8Array 转换为字符串
+  const aesKeyString = String.fromCharCode.apply(null, Array.from(aesKey));
+
+  // 使用 RSA-OAEP 加密（SHA-256）
+  const encrypted = publicKeyObj.encrypt(aesKeyString, "RSA-OAEP", {
+    md: forge.md.sha256.create(),
+  });
+
+  return forge.util.encode64(encrypted);
+};
+
+/**
+ * 生成随机的 AES-256 密钥（node-forge 实现，用于 HTTP 环境）
+ * @returns 32 字节的随机密钥
+ */
+const generateAesKeyFallback = (): Uint8Array => {
+  const keyBytes = forge.random.getBytesSync(32);
+  return Uint8Array.from(keyBytes.split("").map((c) => c.charCodeAt(0)));
+};
+
+/**
+ * 使用 AES-GCM 加密数据（node-forge 实现，用于 HTTP 环境）
+ * @param data 要加密的数据对象
+ * @param key AES 密钥（32 字节）
+ * @returns 包含密文和 nonce 的对象
+ */
+const encryptWithAESFallback = (
+  data: any,
+  key: Uint8Array
+): { ciphertext: string; nonce: string } => {
+  // 生成随机 nonce (12 字节用于 AES-GCM)
+  const nonceBytes = forge.random.getBytesSync(12);
+
+  // 添加时间戳防止重放攻击
+  const dataWithTimestamp = {
+    ...data,
+    _ts: Date.now(),
+  };
+
+  const plaintext = JSON.stringify(dataWithTimestamp);
+
+  // 将 Uint8Array 转换为字符串
+  const keyString = String.fromCharCode.apply(null, Array.from(key));
+
+  // 创建 AES-GCM 加密实例
+  const cipher = forge.cipher.createCipher("AES-GCM", keyString);
+
+  // 初始化 cipher
+  cipher.start({
+    iv: forge.util.createBuffer(nonceBytes),
+  });
+
+  // 更新 cipher
+  cipher.update(forge.util.createBuffer(plaintext, "utf8"));
+
+  // 完成加密
+  cipher.finish();
+
+  // 获取密文和认证标签
+  const ciphertext = cipher.output.getBytes();
+  const tag = cipher.mode.tag.getBytes();
+
+  // 将密文和认证标签拼接
+  const encryptedData = ciphertext + tag;
+
+  return {
+    ciphertext: forge.util.encode64(encryptedData),
+    nonce: forge.util.encode64(nonceBytes),
+  };
+};
+
+/**
+ * 使用 AES-GCM 解密数据（node-forge 实现，用于 HTTP 环境）
+ * @param ciphertext Base64 编码的密文（包含认证标签）
+ * @param nonce Base64 编码的 nonce
+ * @param key AES 密钥（32 字节）
+ * @returns 解密后的数据对象
+ */
+const decryptWithAESFallback = (
+  ciphertext: string,
+  nonce: string,
+  key: Uint8Array
+): any => {
+  // 解码 Base64
+  const encryptedData = forge.util.decode64(ciphertext);
+  const nonceBytes = forge.util.decode64(nonce);
+
+  // 分离密文和认证标签（最后 16 字节是标签）
+  const ciphertextBytes = encryptedData.slice(0, -16);
+  const tagBytes = encryptedData.slice(-16);
+
+  // 将 Uint8Array 转换为字符串
+  const keyString = String.fromCharCode.apply(null, Array.from(key));
+
+  // 创建 AES-GCM 解密实例
+  const decipher = forge.cipher.createDecipher("AES-GCM", keyString);
+
+  // 初始化 decipher
+  decipher.start({
+    iv: forge.util.createBuffer(nonceBytes),
+    tag: forge.util.createBuffer(tagBytes),
+  });
+
+  // 更新 decipher
+  decipher.update(forge.util.createBuffer(ciphertextBytes));
+
+  // 完成解密
+  const success = decipher.finish();
+
+  if (!success) {
+    throw new Error("AES-GCM decryption failed: authentication tag mismatch");
+  }
+
+  const plaintext = decipher.output.toString();
+  return JSON.parse(plaintext);
 };

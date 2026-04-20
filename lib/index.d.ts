@@ -46,11 +46,11 @@ export declare const coreRequest: (options: RequestOptions, urlInfo: IUrlInfo) =
 
 declare interface CryptoConfig {
     enabled: boolean;
-    includeApis?: (string | RegExp)[];
-    excludeApis?: (string | RegExp)[];
-    includeHostKeys?: string[];
-    excludeHostKeys?: string[];
-    excludeSubApps?: string[];
+    includeApis?: MatchPattern[];
+    excludeApis?: MatchPattern[];
+    includeHostKeys?: MatchPattern[];
+    excludeHostKeys?: MatchPattern[];
+    excludeSubApps?: MatchPattern[];
 }
 
 export declare const deepClone: <T>(obj: T) => T;
@@ -111,9 +111,9 @@ export declare const ICON_HOST: {
     [key: string]: any;
 };
 
-export declare const initCrypto: (config?: Partial<CryptoConfig>) => void;
+export declare const initApiLog: (config: Partial<LogConfig>) => void;
 
-export declare const initLog: (config: Partial<LogConfig>) => void;
+export declare const initCrypto: (config?: Partial<CryptoConfig>) => void;
 
 export declare const isJSON: (value: any) => boolean;
 
@@ -263,6 +263,8 @@ declare interface LogConfig {
 
 export declare type LogModule = 'crypto' | 'request' | 'proxy' | 'cache' | 'auth';
 
+declare type MatchPattern = string;
+
 export declare const parseFieldTemplate: (template: string, data: Record<string, any>) => string;
 
 /**
@@ -363,6 +365,10 @@ export declare type RequestOptions = {
      * 控制当前请求是否延时至首屏内容渲染后发送
      */
     defer?: boolean;
+    /**
+     * 是否启用加密通信，优先级高于全局配置
+     */
+    crypto?: boolean;
     success?: (result: AjaxResponse) => void;
     /**
      * 失败的回调函数

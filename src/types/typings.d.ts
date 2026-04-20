@@ -146,6 +146,10 @@ export type RequestOptions = {
     * 控制当前请求是否延时至首屏内容渲染后发送
     */
    defer?: boolean;
+   /**
+    * 是否启用加密通信，优先级高于全局配置
+    */
+   crypto?: boolean;
    success?: (result: AjaxResponse) => void;
    /**
     * 失败的回调函数

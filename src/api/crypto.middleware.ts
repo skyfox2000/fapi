@@ -15,7 +15,7 @@ import { log, logError } from "@/utils/log";
 
 export interface EncryptResult {
   encrypted: boolean;
-  aesKey?: CryptoKey;
+  aesKey?: CryptoKey | Uint8Array;
 }
 
 /**
@@ -30,7 +30,14 @@ export const processEncryptedRequest = async (
 ): Promise<EncryptResult> => {
   const result: EncryptResult = { encrypted: false };
 
-  if (!shouldEncryptUrl(options.url || "", urlInfo.api, urlInfo.subApp)) {
+  // 1. 如果 options.crypto 明确设置为 false，不加密
+  if (options.crypto === false) {
+    return result;
+  }
+
+  // 2. 如果 options.crypto 明确设置为 true，跳过 shouldEncryptUrl 检查直接加密
+  // 3. 如果 options.crypto 为 undefined（基座直接调用），使用 shouldEncryptUrl 判断
+  if (options.crypto === undefined && !shouldEncryptUrl(options.url || "", urlInfo.api, urlInfo.subApp)) {
     return result;
   }
 
@@ -67,7 +74,7 @@ export const processEncryptedRequest = async (
  */
 export const processEncryptedResponse = async (
   res: AjaxResponse,
-  aesKey?: CryptoKey
+  aesKey?: CryptoKey | Uint8Array
 ): Promise<any> => {
   const responseNonce = res.header?.["x-response-nonce"] || res.header?.["X-Response-Nonce"];
 
