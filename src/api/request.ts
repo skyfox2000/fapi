@@ -224,7 +224,7 @@ export const coreRequest = async (
 
       cachePublicKeyFromHeader(ajaxResponse.header);
 
-      ajaxResponse.data = await processEncryptedResponse(ajaxResponse, encryptResult.aesKey);
+      ajaxResponse.data = await processEncryptedResponse(ajaxResponse, encryptResult.aesKey, encryptResult.useWebCrypto);
 
       log('request', '请求完成', { statusCode: ajaxResponse.statusCode });
       return ajaxResponse;

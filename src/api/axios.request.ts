@@ -45,7 +45,10 @@ const request = <T>(
          // 创建新对象，避免修改原始对象
          const proxyOptions = deepClone(options);
          const proxyUrlInfo = deepClone(urlInfo);
-         proxyOptions.crypto = shouldEncryptUrl(options.url || "", urlInfo.api, urlInfo.subApp)
+         // 如果子应用没有传递 crypto 参数，使用基座的加密配置
+         if (proxyOptions.crypto === undefined) {
+            proxyOptions.crypto = shouldEncryptUrl(options.url || "", urlInfo.api, urlInfo.subApp);
+         }
          // 使用代理
          proxy(proxyOptions, proxyUrlInfo)
             .then(async (res) => {

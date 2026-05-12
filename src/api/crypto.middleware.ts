@@ -15,7 +15,8 @@ import { log, logError } from "@/utils/log";
 
 export interface EncryptResult {
   encrypted: boolean;
-  aesKey?: CryptoKey | Uint8Array;
+  aesKey?: Uint8Array;
+  useWebCrypto?: boolean;
 }
 
 /**
@@ -57,7 +58,7 @@ export const processEncryptedRequest = async (
       options.header["X-Encrypted-Key"] = encrypted.encryptedKey;
       options.header["X-Nonce"] = encrypted.nonce;
       log('crypto', '请求加密完成');
-      return { encrypted: true, aesKey: encrypted.aesKey };
+      return { encrypted: true, aesKey: encrypted.aesKey, useWebCrypto: encrypted.useWebCrypto };
     }
   } catch (error) {
     logError('crypto', '请求加密失败', error);
@@ -70,11 +71,13 @@ export const processEncryptedRequest = async (
  * 处理加密响应 - 在收到响应后调用
  * @param res 响应对象
  * @param aesKey AES 密钥（从加密请求时返回）
+ * @param useWebCrypto 是否使用 Web Crypto API 加密
  * @returns 解密后的数据
  */
 export const processEncryptedResponse = async (
   res: AjaxResponse,
-  aesKey?: CryptoKey | Uint8Array
+  aesKey?: Uint8Array,
+  useWebCrypto?: boolean
 ): Promise<any> => {
   const responseNonce = res.header?.["x-response-nonce"] || res.header?.["X-Response-Nonce"];
 
@@ -91,7 +94,7 @@ export const processEncryptedResponse = async (
       }
 
       if (encryptedData && isEncryptedResponse(encryptedData)) {
-        const decrypted = await decryptResponse(encryptedData, responseNonce, aesKey);
+        const decrypted = await decryptResponse(encryptedData, responseNonce, aesKey, useWebCrypto ?? false);
         if (decrypted !== null) {
           log('crypto', '响应解密', { decryptedData: decrypted });
           return decrypted;
